@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pruebas de cálculo</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 24px; color: #2a2326; background: #fff; }
+  .ok { color: #2f7d5b; } .bad { color: #c0392b; font-weight: 700; }
+  td, th { padding: 4px 10px; border-bottom: 1px solid #eee; text-align: left; } td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  #sum { font-size: 18px; font-weight: 700; margin: 12px 0; }
+</style>
+</head>
+<body>
+<h1>Pruebas: app vs. valores de los Excel</h1>
+<p>Abra este archivo en el navegador. Cada fila compara un cálculo de la app con el valor que muestra el Excel original.</p>
+<div id="sum"></div>
+<table><thead><tr><th></th><th>Prueba</th><th>Esperado (Excel)</th><th>Obtenido (app)</th></tr></thead><tbody id="out"></tbody></table>
+<script src="js/config.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/calc.js"></script>
+<script src="js/store.js"></script>
+<script src="js/demo.js"></script>
+<script src="js/xlsx-writer.js"></script>
+<script src="js/excel.js"></script>
+<script>
+  const rows = []; let fails = 0;
+  function eq(name, expected, got, tol = 0.01) {
+    const ok = Math.abs(expected - got) <= tol;
+    if (!ok) fails++;
+    rows.push(`<tr><td class="${ok ? 'ok' : 'bad'}">${ok ? '✔' : '✘'}</td><td>${name}</td><td class="n">${expected.toLocaleString('es-CO')}</td><td class="n">${(Math.round(got * 100) / 100).toLocaleString('es-CO')}</td></tr>`);
+  }
+  const S = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+
+  // ---- 1. Cotización 2428 (hoja COTIZACION) ----
+  const q = buildDemoQuote(S, SEED_CATALOG);
+  const t = Calc.quoteTotals(q);
+  eq('2428 · TOTAL CEREMONIA (G22)', 2802000, t.sections[0].total);
+  eq('2428 · TOTAL RECEPCION (G37)', 12120000, t.sections[1].total);
+  eq('2428 · TRANSPORTE, MONTAJE Y DESMONTAJE (G38)', 1500000, t.transporte);
+  eq('2428 · TOTAL COTIZACION FLORES (G39)', 16422000, t.sections[0].total + t.sections[1].total + t.transporte);
+  eq('2428 · TOTAL MOBILIARIO (G46)', 1345000, t.sections[2].total);
+  eq('2428 · SUBTOTAL DECORACION Y MOBILIARIO (G47)', 17767000, t.subtotal);
+  eq('2428 · IVA 0% → total = subtotal', 17767000, t.total);
+  eq('2428 · Total a consignar con depósito 600.000', 18367000, t.totalConDeposito);
+
+  // ---- 2. Cotización 2347 (hoja COTIZACION) ----
+  const mk = (arr) => arr.map(([qty, unitPrice, courtesy]) => ({ qty, unitPrice, courtesy: !!courtesy, cost: {} }));
+  const q2 = { pct: Object.assign({}, S.pct, { comisionPlanner: 0.10 }), deposito: 600000,
+    transport: { qty: 1, unitPrice: 650000 },
+    sections: [
+      { title: 'CEREMONIA', items: mk([[2, 395000], [1, 395000], [60, 30000], [1, 290000], [3, 98000], [1, 0, true], [6, 15000], [1, 60000], [2, 30000]]) },
+      { title: 'RECEPCION', items: mk([[6, 55000], [1, 590000], [1, 95000], [6, 661000], [6, 30000], [1, 300000], [1, 320000], [1, 300000], [1, 155000]]) },
+    ], logistica: {} };
+  const t2 = Calc.quoteTotals(q2);
+  eq('2347 · TOTAL CEREMONIA (G23)', 3779000, t2.sections[0].total);
+  eq('2347 · TOTAL RECEPCION (G34)', 6236000, t2.sections[1].total);
+  eq('2347 · TOTAL (G36)', 10665000, t2.total);
+  const f2 = Calc.financeSummary(q2, S.logistica);
+  eq('2347 · Comisión planner 10% sobre total − transporte (J38)', 1001500, f2.comisionPlanner);
+
+  // ---- 2b. Ejemplo 2347 completo (demo con insumos) ----
+  const d2 = buildDemoQuote2347(S, SEED_CATALOG);
+  const td2 = Calc.quoteTotals(d2);
+  eq('Ejemplo 2347 · TOTAL CEREMONIA', 3779000, td2.sections[0].total);
+  eq('Ejemplo 2347 · TOTAL RECEPCION', 6236000, td2.sections[1].total);
+  eq('Ejemplo 2347 · TOTAL', 10665000, td2.total);
+  eq('Ejemplo 2347 · comisión planner 10%', 1001500, Calc.financeSummary(d2, S.logistica).comisionPlanner);
+  const sinPrecio = d2.sections.flatMap((s) => s.items).flatMap((i) => i.cost.insumos || []).filter((i) => !i.price).length;
+  eq('Ejemplo 2347 · todos los insumos encontrados en el catálogo', 0, sinPrecio);
+  // Pedido: altar ×2 + pie de padre ×1 → 3 oasis gigante; rusco 6×3 + ...
+  const ped = Calc.flowerOrder(d2, d2.pct);
+  eq('Ejemplo 2347 · Pedido: oasis gigante (altar×2 + pie de padre + entrada)', 4, ped.find((r) => r.name === 'Oasis gigante').qty);
+
+  // Pedido para el proveedor: solo cantidades (redondeadas al paquete), sin precios
+  const sup = Calc.supplierOrder(d2);
+  eq('Pedido proveedor · Eucalipto 6,9 PQ → pedir 7 PQ (70 tallos)', 70, sup.find((r) => r.name === 'Eucalipto').cantidad * 10);
+  eq('Pedido proveedor · no incluye precios ni costos', 0, sup.filter((r) => 'price' in r || 'costo' in r || 'costoConAjuste' in r).length);
+
+  // ---- 3. Tabla Implementos 2428 (A, H, I, J de cada arreglo) ----
+  const rowsX = [[1, 40000, 653200, 1567305], [4, 5000, 26500, 63585], [6, 7500, 42500, 101976], [1, 15000, 77267, 185396], [3, 0, 0, 16000],
+    [2, 15000, 223700, 536752], [5, 15000, 115800, 277853], [5, 0, 0, 320000], [1, 25000, 432200, 1037032], [3, 15000, 223700, 536752],
+    [1, 15000, 223700, 536752], [2, 7500, 114100, 273774], [18, 0, 10000, 180000], [3, 15000, 173200, 415581], [1, 40000, 516000, 1238104]];
+  const pct = Object.assign({}, S.pct);
+  const items = rowsX.map(([A, H, I, J]) => ({ qty: A, unitPrice: J, cost: { mode: 'manual', manualUnitCost: I, labor: H } }));
+  const aro = Calc.lineFinance(items[0], pct);
+  eq('ARO · MONTAJE UNITARIO (M21)', 156730.5, aro.montajeUnit);
+  eq('ARO · COMISION UNITARIA (O21)', 156730.5, aro.comisionUnit);
+  eq('ARO · RETENCION UNITARIA 8% (P21)', 125384.4, aro.retencionUnit);
+  eq('ARO · GANANCIA UNITARIA (N21)', 475259.6, aro.gananciaUnit);
+  const patas = Calc.lineFinance(items[1], pct);
+  eq('PATAS ×4 · GANANCIA TOTAL (Q37)', 77124.8, patas.gananciaTotal);
+  const qi = { pct, sections: [{ title: 'X', items }], transport: { qty: 0, unitPrice: 0 }, logistica: {} };
+  const fi = Calc.financeSummary(qi, S.logistica);
+  eq('TOTAL GANANCIA EN ARREGLOS (D3 / Q377)', 6765325.72, fi.gananciaArreglos);
+  eq('TOTAL COMISIONES (D2 / R377)', 1618610.10, fi.comisiones);
+  eq('TOTAL MONTAJE EVENTO (D4 / S377)', 1618610.10, fi.montaje);
+  eq('TOTAL MANO DE OBRA (D5 / T377)', 410000, fi.manoObra);
+  eq('COSTOS TOTALES (D6 / U377)', 4888667, fi.costos);
+  eq('TOTAL RETENCION arreglos (V377)', 1294888.08, fi.retencionArreglos);
+
+  // ---- 4. Logística (D16, D18) ----
+  const lg = Calc.logistics({ pct, transport: { qty: 1, unitPrice: 1500000 }, logistica: { personal: 3, viajesContratados: 1, viajesPropios: 1, cajasFlete: 2 } },
+    { staff: 25000, arl: 0, almuerzo: 12000, desayuno: 0, viajeContratado: 30000, viajePropio: 5000, fleteCaja: 35000 });
+  eq('VALOR DE RETENCION EN TRANSPORTE (D16)', 120000, lg.retencionTransporte);
+  eq('VALOR DE LOGISTICA (D18)', 1380000, lg.valorLogistica);
+  // D17 = D18 − (personal×25000 + contratada×30000 + propia×5000 + flete×35000 + personal×12000)
+  eq('IMPREVISTOS (D17) con tarifas del Excel', 1380000 - (3 * 25000 + 30000 + 5000 + 2 * 35000 + 3 * 12000), lg.imprevistos);
+
+  // ---- 5. Simulador (hoja ARREGLOS) ----
+  const s1 = Calc.simulate(100000, 0, S.simulador);
+  eq('Simulador · costo 100.000 → precio (×2 ×1,6 ×1,08)', 345600, s1.precio);
+  eq('Simulador · ganancia unitaria (G265 sin ajuste)', 345600 - 20000 - 25600 - 20000 - 100000, s1.gananciaUnitaria);
+  const s2 = Calc.simulate(100000, 20000, { ganancia: 0.5, flete: 0.1, comision: 0.1, montaje: 0.4, retencion: 0.08 });
+  eq('Simulador · alquilados no ganan % de costos pero se suman (G251)', 160000, s2.base);
+  eq('Simulador · precio con alquilados', 276480, s2.precio);
+
+  // ---- 6. Costeo por insumos + ajuste flores 15% ----
+  const it = { qty: 5, unitPrice: 290000, cost: { mode: 'insumos', labor: 15000, insumos: [
+    { name: 'Rosa', cat: 'flor', qty: 1, price: 30000 }, { name: 'Rusco', cat: 'flor', qty: 2, price: 4000 }, { name: 'Lamina', cat: 'oasis', qty: 1.6, price: 1800 }] } };
+  eq('Costo unitario = flores×1,15 + oasis + mano de obra', 38000 * 1.15 + 2880 + 15000, Calc.unitCost(it.cost, 0.15));
+  const ord = Calc.flowerOrder({ sections: [{ items: [it] }] }, { ajusteFlores: 0.15 });
+  eq('Pedido flores · Rusco = 2 PQ × 5 arreglos (F = D × A)', 10, ord.find((r) => r.name === 'Rusco').qty);
+  eq('Pedido flores · Lámina comprar = 8', 8, ord.find((r) => r.name === 'Lamina').compra);
+
+  // ---- 7. Cortesías ----
+  eq('Cortesía vale 0 aunque tenga precio', 0, Calc.lineTotal({ qty: 1, unitPrice: 50000, courtesy: true }));
+
+  // ---- 8. Exportación a Excel (generador propio, sin internet) ----
+  (async () => {
+    const blob = await ExcelExport.quoteBlob(d2, S);
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const text = new TextDecoder().decode(bytes);
+    eq('Excel · el archivo es un ZIP válido (empieza con "PK")', 1, bytes[0] === 0x50 && bytes[1] === 0x4B ? 1 : 0);
+    eq('Excel · contiene las 5 hojas', 5, (text.match(/<sheet name="/g) || []).length);
+    eq('Excel · fórmula del total de cada ítem (=A×D)', 1, /<f>A\d+\*D\d+<\/f>/.test(text) ? 1 : 0);
+    eq('Excel · fórmula de ganancia (J − I − M − O − P)', 1, /<f>E\d+-G\d+-J\d+-K\d+-L\d+<\/f>/.test(text) ? 1 : 0);
+    eq('Excel · resultado guardado del total (10.665.000)', 1, text.includes('<v>10665000</v>') ? 1 : 0);
+    document.getElementById('out').innerHTML = rows.join('');
+    document.getElementById('sum').innerHTML = fails ? `<span class="bad">${fails} prueba(s) fallaron</span>` : `<span class="ok">✔ Las ${rows.length} pruebas pasan</span>`;
+    window.TEST_RESULT = { total: rows.length, fails };
+  })();
+</script>
+</body>
+</html>

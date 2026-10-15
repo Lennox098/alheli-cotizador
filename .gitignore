@@ -1,0 +1,11 @@
+# Archivos que no se suben a GitHub
+.claude/
+Thumbs.db
+desktop.ini
+.DS_Store
+~$*
+*.tmp
+*.log
+node_modules/
+# Respaldos descargados desde Ajustes (contienen cotizaciones y datos de clientes)
+Respaldo*.json

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tutorial Alhelí</title>
+  <meta name="description" content="Cotizaciones, costos y contabilidad de Alhelí Floristería & Eventos">
+  <meta name="theme-color" content="#c93c64">
+  <link rel="icon" href="assets/logo.jpg">
+  <link rel="apple-touch-icon" href="assets/logo.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script>
+    // Tema guardado (claro/oscuro) antes de pintar, para evitar parpadeo
+    try { var t = localStorage.getItem('alheli_theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <div class="app">
+    <aside class="side">
+      <div class="brand">
+        <img src="assets/logo.jpg" alt="Alhelí">
+        <div><b>ALHELÍ</b><small>Cotizador &amp; costos</small></div>
+      </div>
+      <button class="btn primary block new-btn" data-a="newQuote"><span data-ico="plus"></span> Nueva cotización</button>
+      <nav class="nav">
+        <p class="nav-label">General</p>
+        <a href="#/" data-page="inicio"><span data-ico="home"></span> Inicio</a>
+        <a href="#/cotizaciones" data-page="cotizaciones"><span data-ico="file"></span> Cotizaciones</a>
+        <a href="#/contabilidad" data-page="contabilidad"><span data-ico="chart"></span> Contabilidad</a>
+        <p class="nav-label">Costos</p>
+        <a href="#/catalogo" data-page="catalogo"><span data-ico="tag"></span> Catálogo de precios</a>
+        <a href="#/plantillas" data-page="plantillas"><span data-ico="flower"></span> Plantillas de arreglos</a>
+        <p class="nav-label">Sistema</p>
+        <a href="#/ajustes" data-page="ajustes"><span data-ico="settings"></span> Ajustes</a>
+        <a href="tutorial.html" data-page="tutorial"><span data-ico="eye"></span> Tutorial en video</a>
+        <a href="manual-de-usuario.html" target="_blank" rel="noopener" data-page="manual"><span data-ico="file"></span> Manual de usuario</a>
+      </nav>
+      <div class="side-foot">
+        <button class="btn ghost block theme-btn" id="themeBtn" data-a="theme"></button>
+        <span id="modeBadge" class="badge"></span>
+      </div>
+    </aside>
+    <div class="scrim" data-a="toggleNav"></div>
+    <header class="topbar">
+      <button class="ib" data-a="toggleNav" aria-label="Menú"><span data-ico="menu" data-size="22"></span></button>
+      <img src="assets/logo.jpg" alt="" class="tb-logo"><b>Alhelí</b>
+      <button class="ib tb-new" data-a="newQuote" aria-label="Nueva cotización"><span data-ico="plus" data-size="22"></span></button>
+    </header>
+    <main id="main"><div class="loading"><img src="assets/logo.jpg" alt=""><p class="muted">Cargando…</p></div></main>
+  </div>
+  <div id="toasts"></div>
+
+  <!-- Librería para generar el PDF. El Excel se genera con código propio (js/xlsx-writer.js), sin internet. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>window.ALHELI_TUTORIAL = true; // datos de práctica, separados de las cotizaciones reales</script>
+  <script src="js/config.js"></script>
+  <script src="js/catalog.js"></script>
+  <script src="js/logo.js"></script>
+  <script src="js/calc.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/demo.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/xlsx-writer.js"></script>
+  <script src="js/excel.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/demo-fotos.js"></script>
+  <script src="js/tutorial.js"></script>
+</body>
+</html>

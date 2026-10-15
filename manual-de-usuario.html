@@ -1,0 +1,400 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual del Cotizador Alhelí</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: índice fijo a la izquierda + columna de lectura; en celular el índice pasa arriba. */
+:root {
+  --bg: #faf7f5;
+  --paper: #ffffff;
+  --ink: #2a2326;
+  --ink-2: #5d5357;
+  --muted: #8d8287;
+  --line: #ece3e6;
+  --brand: #c93c64;
+  --brand-soft: #fcedf1;
+  --sage: #2f7d5b;
+  --sage-soft: #e8f4ee;
+  --amber: #a26a14;
+  --amber-soft: #fff4e0;
+  --serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1a1618; --paper: #231e21; --ink: #f2eaed; --ink-2: #cbbfc4; --muted: #9a8e94; --line: #3a3236;
+    --brand: #ec7096; --brand-soft: #3a1f29; --sage: #6cc9a0; --sage-soft: #1c3329; --amber: #e8b35e; --amber-soft: #3b2f1e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1a1618; --paper: #231e21; --ink: #f2eaed; --ink-2: #cbbfc4; --muted: #9a8e94; --line: #3a3236;
+  --brand: #ec7096; --brand-soft: #3a1f29; --sage: #6cc9a0; --sage-soft: #1c3329; --amber: #e8b35e; --amber-soft: #3b2f1e;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15.5px/1.65 var(--sans); padding-inline: 16px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px; padding-block: 40px 80px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; max-height: calc(100vh - 48px); overflow-y: auto; font-size: 13.5px; }
+.toc .brand { font: 700 22px/1 var(--serif); letter-spacing: 4px; color: var(--brand); margin: 0 0 4px; }
+.toc .sub { color: var(--muted); font-size: 12px; margin: 0 0 20px; }
+.toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; counter-reset: t; }
+.toc li { counter-increment: t; }
+.toc a { display: flex; gap: 10px; padding: 6px 10px; border-radius: 8px; color: var(--ink-2); text-decoration: none; }
+.toc a::before { content: counter(t); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 16px; }
+.toc a:hover, .toc a:focus-visible { background: var(--brand-soft); color: var(--brand); outline: none; }
+main { min-width: 0; }
+header.intro { border-bottom: 1px solid var(--line); padding-bottom: 28px; margin-bottom: 8px; }
+.eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--brand); margin: 0 0 8px; }
+h1 { font: 600 46px/1.05 var(--serif); margin: 0 0 14px; text-wrap: balance; }
+h2 { font: 600 32px/1.15 var(--serif); margin: 56px 0 10px; text-wrap: balance; scroll-margin-top: 20px; }
+h2 .n { color: var(--brand); margin-right: 10px; }
+h3 { font-size: 16.5px; margin: 30px 0 6px; text-wrap: balance; }
+p, li { max-width: 68ch; }
+p { margin: 0 0 12px; }
+.lead { font-size: 17.5px; color: var(--ink-2); }
+a { color: var(--brand); }
+ul, ol { padding-left: 22px; margin: 0 0 14px; }
+li { margin-bottom: 5px; }
+.ui { font-weight: 600; color: var(--ink); background: var(--brand-soft); border-radius: 5px; padding: 0 6px; white-space: nowrap; }
+kbd { font: 600 12.5px var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; background: var(--paper); }
+code { font: 13px var(--mono); background: var(--paper); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; }
+.steps { counter-reset: s; list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.steps > li { counter-increment: s; position: relative; padding-left: 40px; max-width: 72ch; }
+.steps > li::before { content: counter(s); position: absolute; left: 0; top: 1px; width: 26px; height: 26px; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+.tip, .warn, .acct { border-radius: 12px; padding: 12px 16px; margin: 16px 0; max-width: 72ch; font-size: 14.5px; }
+.tip { background: var(--sage-soft); }
+.tip b:first-child { color: var(--sage); }
+.warn { background: var(--amber-soft); }
+.warn b:first-child { color: var(--amber); }
+.acct { background: var(--brand-soft); }
+.acct b:first-child { color: var(--brand); }
+.tablewrap { overflow-x: auto; margin: 14px 0 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px; }
+.tabs span { background: var(--paper); border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.tabs span b { color: var(--brand); margin-right: 6px; }
+.formula { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; font: 13.5px/1.9 var(--mono); max-width: 72ch; overflow-x: auto; margin: 12px 0 18px; }
+.formula b { color: var(--brand); font-weight: 600; }
+.status { display: inline-block; border-radius: 99px; padding: 1px 10px; font-size: 12.5px; font-weight: 600; }
+.s1 { background: var(--line); color: var(--ink-2); }
+.s2 { background: #e5eefb; color: #2a5b9c; }
+.s3 { background: var(--sage-soft); color: var(--sage); }
+.s4 { background: #efe8f8; color: #6a43a5; }
+.s5 { background: #fbe7e5; color: #b5392b; }
+:root[data-theme="dark"] .s2 { background: #1f2c40; color: #8fb3ea; } :root[data-theme="dark"] .s4 { background: #2d2340; color: #b99be6; } :root[data-theme="dark"] .s5 { background: #432421; color: #ef8a7d; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .s2 { background: #1f2c40; color: #8fb3ea; } :root:not([data-theme="light"]) .s4 { background: #2d2340; color: #b99be6; } :root:not([data-theme="light"]) .s5 { background: #432421; color: #ef8a7d; } }
+dl.gloss { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 22px; max-width: 72ch; }
+dl.gloss dt { font-weight: 700; }
+dl.gloss dd { margin: 0; color: var(--ink-2); }
+details { border: 1px solid var(--line); border-radius: 12px; background: var(--paper); padding: 2px 16px; margin-bottom: 8px; max-width: 72ch; }
+summary { cursor: pointer; font-weight: 600; padding: 10px 0; }
+summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; border-radius: 4px; }
+details[open] summary { color: var(--brand); }
+footer { margin-top: 60px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 20px; padding-block: 24px 60px; }
+  nav.toc { position: static; max-height: none; border: 1px solid var(--line); border-radius: 14px; padding: 16px; background: var(--paper); }
+  .toc ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  h1 { font-size: 36px; }
+  h2 { font-size: 27px; margin-top: 44px; }
+}
+@media (max-width: 460px) { .toc ol { grid-template-columns: minmax(0, 1fr); } dl.gloss { grid-template-columns: minmax(0, 1fr); gap: 2px 0; } dl.gloss dd { margin-bottom: 10px; } }
+</style>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Contenido">
+    <p class="brand">ALHELÍ</p>
+    <p class="sub">Manual del cotizador</p>
+    <ol>
+      <li><a href="#empezar">Antes de empezar</a></li>
+      <li><a href="#cotizacion">Crear una cotización</a></li>
+      <li><a href="#fotos">Fotos</a></li>
+      <li><a href="#costos">Costos internos</a></li>
+      <li><a href="#enviar">Descargar y enviar</a></li>
+      <li><a href="#seguimiento">Estados y seguimiento</a></li>
+      <li><a href="#contador">Para el contador</a></li>
+      <li><a href="#catalogo">Catálogo de precios</a></li>
+      <li><a href="#plantillas">Plantillas y simulador</a></li>
+      <li><a href="#ajustes">Ajustes y respaldos</a></li>
+      <li><a href="#calculos">Cómo calcula</a></li>
+      <li><a href="#preguntas">Preguntas frecuentes</a></li>
+      <li><a href="#glosario">Glosario</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="intro">
+      <p class="eyebrow">Alhelí, Floristería &amp; Eventos</p>
+      <h1>Manual de usuario del cotizador</h1>
+      <p class="lead">Cómo hacer una cotización de principio a fin, ponerle fotos, controlar los costos de cada arreglo y entregarle al contador cifras limpias. Escrito para quien cotiza (gerencia y ventas) y para quien revisa las finanzas.</p>
+    </header>
+
+    <!-- 1 -->
+    <h2 id="empezar"><span class="n">1</span>Antes de empezar</h2>
+    <h3>Abrir la aplicación</h3>
+    <p>Abra la carpeta <code>aplicasion</code> y haga doble clic en <code>index.html</code>. Se abre en Chrome o Edge. Si ya está publicada en internet, entre a su dirección (por ejemplo <code>alheli-cotizador.netlify.app</code>); desde el celular puede usar <span class="ui">Agregar a la pantalla de inicio</span> para tenerla como una app.</p>
+
+    <h3>El menú de la izquierda</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Pantalla</th><th>Para qué sirve</th></tr></thead>
+      <tbody>
+        <tr><td><b>Inicio</b></td><td>Tablero: total cotizado, aprobado, tasa de cierre, utilidad, valor por mes, próximos eventos.</td></tr>
+        <tr><td><b>Cotizaciones</b></td><td>Lista de todas las cotizaciones, con buscador y filtro por estado. Desde aquí se abre cada una.</td></tr>
+        <tr><td><b>Contabilidad</b></td><td>Resumen financiero de varias cotizaciones a la vez, exportable a Excel.</td></tr>
+        <tr><td><b>Catálogo de precios</b></td><td>Precio de costo de flores, oasis, velas, alquilados y mano de obra.</td></tr>
+        <tr><td><b>Plantillas de arreglos</b></td><td>Recetas de arreglos (altar, bouquet, centro de mesa…) para cotizar más rápido.</td></tr>
+        <tr><td><b>Ajustes</b></td><td>Datos de la empresa, cuentas bancarias, términos, porcentajes, tarifas y respaldos.</td></tr>
+      </tbody>
+    </table></div>
+    <p>Abajo a la izquierda está el botón <span class="ui">Modo oscuro</span> y una etiqueta que dice dónde se guardan los datos: <b>Este equipo</b> o <b>Nube</b>.</p>
+
+    <h3>Dónde quedan guardados los datos</h3>
+    <p>Todo se guarda solo, mientras escribe. Junto al número de la cotización verá <span class="ui">Guardado</span> cuando ya quedó.</p>
+    <div class="warn"><b>Importante.</b> Si la app trabaja en modo <b>Este equipo</b>, los datos viven solo en ese navegador. Otro computador u otro navegador no los ve. Descargue un respaldo cada semana en <span class="ui">Ajustes → Descargar respaldo</span>, o active la nube para compartir con el contador (instrucciones en el archivo README).</div>
+
+    <div class="tip"><b>Para practicar.</b> En <span class="ui">Cotizaciones</span> (abajo de la lista) o en <span class="ui">Ajustes</span> hay dos ejemplos basados en sus Excel reales: la boda del Hilton (2428) y la boda en la Catedral con fotos (2347). Puede cargarlos, explorarlos y luego eliminarlos.</div>
+
+    <!-- 2 -->
+    <h2 id="cotizacion"><span class="n">2</span>Crear una cotización</h2>
+    <p>Pulse <span class="ui">+ Nueva cotización</span> (en el menú o en la parte de arriba). La app le asigna el siguiente número automáticamente y abre la cotización. Arriba verá estas pestañas, que se recorren en orden:</p>
+    <div class="tabs"><span><b>1</b>Cliente y evento</span><span><b>2</b>Ítems y fotos</span><span><b>3</b>Costos internos</span><span><b>4</b>Pedido de flores</span><span><b>5</b>Resumen financiero</span><span><b>6</b>Vista para el cliente</span></div>
+    <p>Las pestañas 1, 2 y 6 son lo que ve el cliente. Las 3, 4 y 5 son de uso interno y nunca salen en el PDF.</p>
+
+    <h3>Pestaña 1 · Cliente y evento</h3>
+    <ol class="steps">
+      <li>Revise las fechas de <b>elaboración</b> y <b>vencimiento</b> (por defecto, 15 días de vigencia).</li>
+      <li>Escriba el <b>nombre del cliente</b>, el <b>correo</b> y el <b>celular</b>. El celular se usa para abrir WhatsApp directo con esa persona.</li>
+      <li>Complete el <b>evento</b>: tipo (Boda, Corporativo, Quince años…), lugar de ceremonia y de recepción, fecha, hora y número de invitados (PAX).</li>
+      <li>Si quiere, escriba <b>notas para el cliente</b>. Salen en el PDF antes de los términos y condiciones.</li>
+    </ol>
+
+    <h3>Pestaña 2 · Ítems y fotos</h3>
+    <p>Aquí se arma lo que el cliente va a comprar. La cotización trae dos secciones: <b>CEREMONIA</b> y <b>RECEPCIÓN</b>.</p>
+    <ol class="steps">
+      <li>Pulse <span class="ui">+ Ítem</span> dentro de la sección.</li>
+      <li>Escriba la <b>cantidad</b>, la <b>descripción</b> tal como la leerá el cliente y el <b>valor unitario</b>. El valor total se calcula solo.</li>
+      <li>Para regalar algo, active <span class="ui">Cortesía</span>: el ítem sale en el PDF con la palabra CORTESÍA y vale $0.</li>
+      <li>Repita para cada arreglo. El resumen con el <b>TOTAL</b> se actualiza al instante (en pantallas medianas aparece como una barra fija abajo).</li>
+    </ol>
+    <div class="tip"><b>Más rápido con plantillas.</b> En lugar de <span class="ui">+ Ítem</span>, use la lista <span class="ui">✿ Ítem desde plantilla</span>. Crea el ítem con su descripción, sus insumos, la mano de obra, la foto de la plantilla y un <b>precio sugerido</b> que luego puede cambiar.</div>
+    <p><b>Otras acciones sobre los ítems:</b></p>
+    <ul>
+      <li><b>Reordenar:</b> arrastre la manija <b>⠿</b> que está a la izquierda de cada ítem y suéltelo donde lo quiere, incluso en otra sección.</li>
+      <li><b>Duplicar</b> o <b>eliminar</b>: íconos a la derecha del ítem. Antes de eliminar, la app pide confirmación.</li>
+      <li><b>Secciones nuevas:</b> <span class="ui">+ Agregar sección</span> (por ejemplo MOBILIARIO o COCTEL). El nombre de cualquier sección se cambia escribiendo encima.</li>
+    </ul>
+    <p>Más abajo están <b>Logística</b> (transporte, montaje y desmontaje: cantidad, descripción y valor) e <b>Impuestos, anticipo y depósito</b>:</p>
+    <ul>
+      <li><b>IVA:</b> 0% por defecto, como en sus cotizaciones. Si lo cambia, se suma al subtotal.</li>
+      <li><b>Anticipo:</b> 50% por defecto. Sale en el PDF como el valor para reservar la fecha.</li>
+      <li><b>Depósito reembolsable:</b> $600.000 por defecto. Se muestra aparte porque no es un ingreso: se devuelve con el material en buen estado.</li>
+    </ul>
+
+    <!-- 3 -->
+    <h2 id="fotos"><span class="n">3</span>Fotos en la cotización</h2>
+    <p>Igual que en sus Excel, cada ítem puede llevar fotos de referencia. Son opcionales.</p>
+    <h3>Agregar una foto a un ítem</h3>
+    <p>Hay tres formas, en la pestaña <span class="ui">Ítems y fotos</span>:</p>
+    <ul>
+      <li>Pulse el botón <span class="ui">🖼 Foto</span> debajo de la descripción y elija una o varias imágenes.</li>
+      <li><b>Arrastre</b> la imagen desde una carpeta (o desde WhatsApp Web) y suéltela sobre el ítem. El ítem se ilumina cuando la va a recibir.</li>
+      <li>Copie la imagen, haga clic en la descripción del ítem y presione <kbd>Ctrl</kbd> + <kbd>V</kbd>.</li>
+    </ul>
+    <p>Haga clic en una foto para verla grande (con las flechas <kbd>←</kbd> <kbd>→</kbd> pasa a la siguiente, <kbd>Esc</kbd> cierra). Para quitarla, pase el mouse encima y pulse la ✕.</p>
+    <h3>Elegir cómo salen en el PDF y el Excel</h3>
+    <p>En <span class="ui">Cliente y evento → Fotos en la cotización</span>, o arriba de la <span class="ui">Vista para el cliente</span>:</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Opción</th><th>Resultado</th></tr></thead>
+      <tbody>
+        <tr><td><b>Sin fotos</b></td><td>El PDF y el Excel salen sin imágenes. Las fotos siguen guardadas por si las necesita después.</td></tr>
+        <tr><td><b>Junto a cada ítem</b></td><td>Una columna REFERENCIA con la foto al lado de cada concepto (como la columna E de su Excel).</td></tr>
+        <tr><td><b>Galería al final</b></td><td>La tabla sale limpia y las fotos aparecen al final, en una cuadrícula con su descripción.</td></tr>
+      </tbody>
+    </table></div>
+    <p>En esa misma tarjeta puede poner una <b>foto de portada</b>: sale como banner debajo del encabezado del PDF y del Excel.</p>
+    <div class="tip"><b>No se preocupe por el tamaño.</b> La app reduce cada foto a un máximo de 1000 píxeles al subirla. Así el PDF se envía rápido por WhatsApp.</div>
+
+    <!-- 4 -->
+    <h2 id="costos"><span class="n">4</span>Costos internos</h2>
+    <p>La pestaña <span class="ui">Costos internos</span> reemplaza la hoja IMPLEMENTOS DE DECORACION. Cada ítem aparece como una tarjeta con su venta, costo, ganancia y margen por unidad. Haga clic en la tarjeta para abrirla (o use <span class="ui">Abrir todos</span>).</p>
+    <h3>Dos formas de costear un arreglo</h3>
+    <ul>
+      <li><b>Desglose de insumos</b> (recomendado): agregue cada flor, follaje, oasis o vela con <span class="ui">+ Insumo</span>. Empiece a escribir el nombre y elíjalo de la lista: la unidad y el precio se llenan desde el catálogo. Ponga la <b>cantidad por arreglo</b> (en paquetes para flores: 0,25 PQ de rosa son 6 tallos si el paquete trae 24). También puede <span class="ui">✿ Cargar plantilla de arreglo</span>.</li>
+      <li><b>Costo unitario manual</b>: escriba directamente cuánto le cuesta cada arreglo (incluida la mano de obra), como hacía en el Excel.</li>
+    </ul>
+    <p>Luego escriba la <b>mano de obra por unidad</b> o tómela del catálogo (Centro de mesa bajo $15.000, Altar $25.000, Hupa/arco $40.000…).</p>
+    <p>Debajo verá el desglose: flores, ajuste de flores, oasis e implementos, alquilados, mano de obra y el <b>costo unitario</b>. También verá montaje, comisión, retención y la ganancia por unidad y total.</p>
+    <div class="tip"><b>Precio sugerido.</b> La tarjeta rosada muestra el precio que calcula el simulador a partir del costo. Con <span class="ui">Usar este precio</span> lo pasa al ítem.</div>
+    <div class="warn"><b>Marca ⚠ sin costeo.</b> Aparece en ítems que tienen precio pero no tienen costo cargado. Mientras no se costeen, su ganancia sale inflada.</div>
+    <h3>Parámetros y logística</h3>
+    <p>Arriba de la pestaña están los porcentajes de esta cotización: retención o ICA (8%), ajuste de flores (15%), comisión (10%), montaje (10%) y comisión del planner o agencia (0% salvo que el cliente sea una agencia). Si cambió precios en el catálogo, pulse <span class="ui">Actualizar precios</span>.</p>
+    <p>Al final de la pestaña, en <b>Logística</b>, escriba el personal requerido, los viajes en transporte contratado, los viajes en camioneta propia, las cajas de flete y otros gastos. La app le dice si el transporte que cobró alcanza: si el margen de logística sale en rojo, está cobrando menos de lo que cuesta.</p>
+    <h3>Pestaña 4 · Pedido de flores</h3>
+    <p>Suma automáticamente cada insumo de todos los arreglos. La columna <b>Comprar</b> redondea los paquetes hacia arriba y la columna <b>Tallos</b> dice cuántas flores son. Se puede exportar a Excel o CSV para enviarlo al proveedor. Los ítems con costo manual no aportan insumos a este pedido.</p>
+    <h3>Pestaña 5 · Resumen financiero</h3>
+    <p>Muestra en una gráfica a dónde va cada peso de la venta (costos, comisiones, montaje, retención, logística, comisión del planner y utilidad), los arreglos que más ganancia dejan y la tabla completa por arreglo.</p>
+
+    <!-- 5 -->
+    <h2 id="enviar"><span class="n">5</span>Descargar y enviar</h2>
+    <p>Revise primero la pestaña <span class="ui">Vista para el cliente</span>: es exactamente lo que recibirá. Después use los botones de arriba:</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Botón</th><th>Qué hace</th></tr></thead>
+      <tbody>
+        <tr><td><span class="ui">Descargar ▾ → PDF</span></td><td>Descarga la cotización en PDF tamaño carta, con logo, fotos, totales, términos, cuentas y firma.</td></tr>
+        <tr><td><span class="ui">Descargar ▾ → Excel</span></td><td>Descarga un archivo .xlsx con fórmulas que funcionan, fotos y cinco hojas (ver sección 7).</td></tr>
+        <tr><td><span class="ui">Descargar ▾ → Imprimir</span></td><td>Abre la impresión. También sirve para guardar como PDF sin internet.</td></tr>
+        <tr><td><span class="ui">WhatsApp</span></td><td>En el celular: comparte el PDF directo al chat. En el computador: descarga el PDF y abre WhatsApp Web con el mensaje escrito; solo arrastre el PDF al chat.</td></tr>
+        <tr><td><span class="ui">Email</span></td><td>Descarga el PDF y abre su correo con el asunto y el mensaje listos; adjunte el PDF.</td></tr>
+        <tr><td><span class="ui">•••</span></td><td>Duplicar (crea una copia con un número nuevo, útil para una segunda propuesta) o Eliminar.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="tip"><b>Automático.</b> Al descargar el PDF de una cotización en <span class="status s1">Borrador</span>, la app la pasa a <span class="status s2">Enviada</span>.</div>
+
+    <!-- 6 -->
+    <h2 id="seguimiento"><span class="n">6</span>Estados y seguimiento</h2>
+    <p>El estado se cambia en la lista desplegable junto al número de la cotización:</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Estado</th><th>Cuándo usarlo</th></tr></thead>
+      <tbody>
+        <tr><td><span class="status s1">Borrador</span></td><td>Todavía la está armando.</td></tr>
+        <tr><td><span class="status s2">Enviada</span></td><td>El cliente ya la recibió.</td></tr>
+        <tr><td><span class="status s3">Aprobada</span></td><td>El cliente aceptó (firmó contrato o pagó el anticipo).</td></tr>
+        <tr><td><span class="status s4">Realizada</span></td><td>El evento ya se hizo.</td></tr>
+        <tr><td><span class="status s5">Cancelada</span></td><td>No se hizo.</td></tr>
+      </tbody>
+    </table></div>
+    <p>Mantener el estado al día es lo que hace que funcionen el <b>Inicio</b> (tasa de cierre, próximos eventos con los días que faltan) y la <b>Contabilidad</b>, que por defecto solo suma las aprobadas y realizadas.</p>
+    <p>En <span class="ui">Cotizaciones</span> puede buscar por cliente, número o lugar, filtrar por estado y cambiar entre la vista de tarjetas con foto y la vista de tabla.</p>
+
+    <!-- 7 -->
+    <h2 id="contador"><span class="n">7</span>Para el contador</h2>
+    <div class="acct"><b>En resumen:</b> la pantalla <span class="ui">Contabilidad</span> trae el consolidado de todas las cotizaciones y cada cotización tiene su <span class="ui">Resumen financiero</span>. Todo se exporta a Excel con fórmulas que funcionan, sin <code>#REF!</code>.</div>
+    <h3>Pantalla Contabilidad</h3>
+    <ol class="steps">
+      <li>Filtre por <b>estado</b> (por defecto: aprobadas y realizadas) y por <b>rango de fechas del evento</b>.</li>
+      <li>Revise la gráfica y los totales: ventas, costos, comisiones, montaje, retención o ICA, ganancia en arreglos, logística neta y utilidad estimada, cada uno con su porcentaje sobre la venta.</li>
+      <li>Haga clic en una fila para abrir el resumen financiero de esa cotización.</li>
+      <li>Exporte con <span class="ui">Excel</span> (una hoja con totales y fórmulas), <span class="ui">CSV resumen</span> o <span class="ui">CSV detalle</span> (todas las líneas de todos los arreglos).</li>
+    </ol>
+    <h3>El Excel de una cotización</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Hoja</th><th>Contenido</th></tr></thead>
+      <tbody>
+        <tr><td><b>COTIZACION</b></td><td>La misma que recibe el cliente, lista para imprimir. Totales con <code>SUM</code> y <code>Cant × Vlr. unit</code>.</td></tr>
+        <tr><td><b>RESUMEN</b></td><td>Venta, IVA, costos, comisiones, montaje, retención, ganancia, logística, comisión del planner y utilidad, con % sobre la venta.</td></tr>
+        <tr><td><b>COSTOS INTERNOS</b></td><td>La tabla de IMPLEMENTOS con todas sus columnas y fórmulas.</td></tr>
+        <tr><td><b>INSUMOS</b></td><td>Desglose de flores e insumos por arreglo. El costo de cada arreglo se calcula desde aquí con <code>SUMIF</code>.</td></tr>
+        <tr><td><b>PEDIDO FLORES</b></td><td>Qué comprar y cuánto cuesta.</td></tr>
+      </tbody>
+    </table></div>
+    <p>Las celdas <b>amarillas</b> se pueden cambiar (retención, ajuste de flores, tarifas de logística, % del planner, costos manuales) y todo el libro se recalcula. Las <b>rojas</b> marcan arreglos sin costo cargado.</p>
+    <div class="warn"><b>IVA.</b> Si una cotización lleva IVA, aparece como "IVA por pagar": no se suma a la venta ni a la utilidad.</div>
+
+    <!-- 8 -->
+    <h2 id="catalogo"><span class="n">8</span>Catálogo de precios</h2>
+    <p>Trae los 221 precios del LISTADO DE PRECIOS NUEVO, separados en flores y follajes, oasis, implementos, implementos alquilados y mano de obra.</p>
+    <ul>
+      <li><b>Cambiar un precio:</b> escriba encima; se guarda solo. Las cotizaciones ya hechas conservan su precio hasta que pulse <span class="ui">Actualizar precios</span> dentro de ellas.</li>
+      <li><b>Agregar:</b> <span class="ui">Agregar</span> crea una fila nueva en la categoría que está viendo.</li>
+      <li><b>Unidad y unidades por paquete:</b> por ejemplo, Rosa es PQ de 24 a $30.000; Hortensia selecta es UN a $1.600.</li>
+      <li><b>Actualizar plantillas</b> lleva los precios nuevos a todas las recetas.</li>
+      <li><b>Importar CSV</b> sirve para cargar una lista de precios del proveedor. Columnas en este orden, separadas por punto y coma: <code>Categoría;Nombre;Unidad;Unidades por paquete;Precio</code>. La categoría es <code>flor</code>, <code>oasis</code>, <code>implemento</code>, <code>alquilado</code>, <code>manoobra</code> u <code>otro</code>. Si el nombre ya existe, se actualiza. Lo más fácil es <span class="ui">Exportar CSV</span>, editarlo en Excel e importarlo.</li>
+    </ul>
+
+    <!-- 9 -->
+    <h2 id="plantillas"><span class="n">9</span>Plantillas de arreglos y simulador</h2>
+    <p>Una plantilla es la receta de un arreglo: su foto, su descripción para el cliente, la mano de obra y los insumos por unidad. Ya vienen 10 (altar, aro, mini bouquet, bouquet de novia, boutonniere, mesa imperial, centro de mesa bajo, copas con velas, jarrón de entrada, cenefa floral).</p>
+    <ol class="steps">
+      <li>Entre a <span class="ui">Plantillas de arreglos</span> y pulse <span class="ui">+ Nueva plantilla</span>, o abra una existente.</li>
+      <li>Póngale nombre, foto (botón o arrastrar), descripción y mano de obra.</li>
+      <li>Agregue los insumos con su cantidad por arreglo.</li>
+      <li>A la derecha, el <b>simulador</b> muestra el costo de realización y el precio de venta sugerido, paso a paso.</li>
+    </ol>
+    <p>Los porcentajes del simulador (ganancia 100%, flete 10%, comisión 10%, montaje 40%, retención 8%) se cambian ahí mismo o en Ajustes, y aplican a todas las plantillas.</p>
+
+    <!-- 10 -->
+    <h2 id="ajustes"><span class="n">10</span>Ajustes y respaldos</h2>
+    <ul>
+      <li><b>Empresa:</b> nombre, firma, cargo, dirección, teléfonos, web, correo y redes. Salen en el PDF y el Excel.</li>
+      <li><b>Cuentas para consignar:</b> Davivienda y Bancolombia; puede agregar más.</li>
+      <li><b>Términos y condiciones:</b> uno por casilla. Escriba <code>{deposito}</code> donde quiera que aparezca el valor del depósito de cada cotización.</li>
+      <li><b>Valores por defecto:</b> siguiente número, días de vigencia, depósito, anticipo, IVA, retención, ajuste de flores, comisión, montaje y comisión del planner. Aplican a las cotizaciones nuevas; las existentes conservan los suyos.</li>
+      <li><b>Logística (tarifas):</b> staff $80.000, ARL $35.000, almuerzo $16.000, desayuno $6.000, viaje contratado $150.000, viaje propio $30.000 y flete por caja $35.000. Con <span class="ui">Restaurar valores del Excel</span> vuelven a los originales.</li>
+      <li><b>Datos y respaldo:</b> <span class="ui">Descargar respaldo</span> guarda todo en un archivo .json; <span class="ui">Restaurar respaldo</span> lo recupera en este u otro computador.</li>
+    </ul>
+
+    <!-- 11 -->
+    <h2 id="calculos"><span class="n">11</span>Cómo calcula</h2>
+    <p>Son las mismas fórmulas de sus Excel, con las referencias rotas corregidas.</p>
+    <h3>Para el cliente</h3>
+    <div class="formula">
+      Vlr. total = <b>Cantidad × Vlr. unitario</b> (cortesía = $0)<br>
+      Subtotal = suma de las secciones + transporte<br>
+      Total = Subtotal + IVA<br>
+      Anticipo = Total × 50% · Depósito: aparte, reembolsable
+    </div>
+    <h3>Por cada arreglo</h3>
+    <div class="formula">
+      Costo unitario = flores × (1 + 15%) + oasis/implementos + alquilados + mano de obra<br>
+      Montaje = Vlr. cotizado × 10% · Comisión = Vlr. cotizado × 10% · Retención = Vlr. cotizado × 8%<br>
+      <b>Ganancia = Vlr. cotizado − Costo − Montaje − Comisión − Retención</b>
+    </div>
+    <h3>Logística y utilidad</h3>
+    <div class="formula">
+      Valor logística = Transporte − (Transporte × 8%)<br>
+      Margen logística = Valor logística − (personal + viajes + flete + otros)<br>
+      <b>Utilidad estimada = Ganancia en arreglos + Margen logística − Comisión planner</b>
+    </div>
+    <h3>Ejemplo real: centro de mesa de la cotización 2428</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Concepto</th><th class="num">Valor por centro</th></tr></thead>
+      <tbody>
+        <tr><td>Valor cotizado (lo que paga el cliente)</td><td class="num">$ 290.000</td></tr>
+        <tr><td>Costo unitario (incluye $15.000 de mano de obra)</td><td class="num">− $ 115.800</td></tr>
+        <tr><td>Montaje 10%</td><td class="num">− $ 29.000</td></tr>
+        <tr><td>Comisión 10%</td><td class="num">− $ 29.000</td></tr>
+        <tr><td>Retención 8%</td><td class="num">− $ 23.200</td></tr>
+        <tr><td><b>Ganancia por centro</b></td><td class="num"><b>$ 93.000</b></td></tr>
+        <tr><td>× 5 centros</td><td class="num"><b>$ 465.000</b></td></tr>
+      </tbody>
+    </table></div>
+
+    <!-- 12 -->
+    <h2 id="preguntas"><span class="n">12</span>Preguntas frecuentes</h2>
+    <details><summary>El PDF no se descarga</summary><p>La primera vez necesita internet para cargar la herramienta de PDF. Sin internet use <span class="ui">Descargar ▾ → Imprimir</span> y elija "Guardar como PDF". El Excel funciona siempre, incluso sin internet.</p></details>
+    <details><summary>El contador no ve mis cotizaciones</summary><p>En modo <b>Este equipo</b> cada computador tiene sus propios datos. Envíele el Excel de Contabilidad, un respaldo (.json) que él restaure, o active la nube para que ambos trabajen sobre los mismos datos.</p></details>
+    <details><summary>Cambié un precio en el catálogo y la cotización no cambió</summary><p>Es a propósito: una cotización enviada no debe cambiar sola. Abra la cotización, vaya a <span class="ui">Costos internos</span> y pulse <span class="ui">Actualizar precios</span>.</p></details>
+    <details><summary>Quiero hacer una segunda propuesta para el mismo cliente</summary><p>Use <span class="ui">••• → Duplicar</span>. Se crea una copia con un número nuevo, en estado Borrador.</p></details>
+    <details><summary>Me equivoqué de número de cotización</summary><p>Haga clic en el número junto a "Cotización No." y escríbalo de nuevo. El contador de números siempre sigue después del más alto usado.</p></details>
+    <details><summary>Una flor no está en el catálogo</summary><p>Agréguela en <span class="ui">Catálogo de precios → Agregar</span>, o escriba el nombre y el precio a mano directamente en el insumo del arreglo.</p></details>
+    <details><summary>¿Cómo borro los ejemplos?</summary><p>Ábralos y use <span class="ui">••• → Eliminar</span>. No afectan sus cotizaciones reales.</p></details>
+    <details><summary>Cambié de computador</summary><p>En el computador anterior: <span class="ui">Ajustes → Descargar respaldo</span>. En el nuevo: abra la app y use <span class="ui">Ajustes → Restaurar respaldo</span>.</p></details>
+
+    <!-- 13 -->
+    <h2 id="glosario"><span class="n">13</span>Glosario</h2>
+    <dl class="gloss">
+      <dt>PAX</dt><dd>Número de invitados del evento.</dd>
+      <dt>PQ / UN / DOC</dt><dd>Paquete, unidad y docena. Las flores se costean por paquete (por ejemplo, 0,5 PQ es medio paquete).</dd>
+      <dt>Cortesía</dt><dd>Ítem que se entrega sin cobrar. Vale $0 para el cliente, pero su costo sí cuenta en los costos internos.</dd>
+      <dt>Ajuste flores</dt><dd>Porcentaje (15%) que se suma al costo de las flores para cubrir variación de precios y merma.</dd>
+      <dt>Montaje</dt><dd>Porcentaje del valor de cada arreglo destinado al montaje del evento.</dd>
+      <dt>Retención o ICA</dt><dd>Porcentaje (8%) que se descuenta del valor cobrado por impuestos y retenciones.</dd>
+      <dt>Comisión planner</dt><dd>Porcentaje para la agencia o wedding planner que trae al cliente, calculado sobre el total sin transporte.</dd>
+      <dt>Anticipo</dt><dd>Pago (50%) para reservar la fecha. El saldo se paga 15 días antes del evento.</dd>
+      <dt>Depósito reembolsable</dt><dd>Garantía por las bases decorativas. Se devuelve con el material en buen estado; no es ingreso.</dd>
+      <dt>Margen de logística</dt><dd>Lo que queda del transporte cobrado después de pagar personal, viajes y flete. Si sale negativo, el transporte se cobró por debajo de su costo.</dd>
+    </dl>
+
+    <footer>Alhelí, Floristería &amp; Eventos · Manga Cra 24 #26-06, Cartagena · Manual del cotizador y control de costos</footer>
+  </main>
+</div>
