@@ -180,3 +180,4 @@ Validado abriéndolo en Microsoft Excel 16: 0 errores de fórmula y valores idé
 - **Correo:** descarga el PDF y abre su programa de correo con asunto y mensaje; adjunte el PDF.
 - **Cambiar logo:** reemplace `assets/logo.jpg` y en `js/logo.js` pegue la imagen en base64 (o pídale a su desarrollador que lo regenere).
 - **Numeración:** cada cotización nueva toma el siguiente número (después de la 2428 → 2429). Se puede escribir otro a mano.
+# alheli-cotizador
