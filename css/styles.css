@@ -714,3 +714,14 @@ body.tut-video .tut-big { visibility: hidden; }
 .in.sb-prov { padding: 6px 10px; font-size: 13px; }
 .sb-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 4px; }
 @media (max-width: 760px) { .sb-row { grid-template-columns: minmax(0, 1fr); } }
+
+/* Interruptor "Alquilado" en implementos */
+.switch.sm i { width: 28px; height: 16px; }
+.switch.sm i::after { width: 12px; height: 12px; }
+.switch.sm input:checked + i::after { transform: translateX(12px); }
+.ins-rent { margin-top: 5px; font-size: 11.5px; }
+.rent-help { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 12px 16px; }
+.rent-help p { margin: 0; flex: 1; min-width: 260px; }
+.rent-help .seg small { color: var(--muted); margin-left: 3px; }
+#catRows td:first-child .in { min-width: 230px; }
+#catRows td:nth-child(2) select.in { min-width: 150px; }

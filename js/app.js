@@ -633,6 +633,7 @@
           it.cost.labor = c.price; save(); rerender();
         },
         setMode(b) { const it = itemAt(b); it.cost.mode = b.dataset.k; save(); rerender(); },
+        insRent(el) { toggleInsRent(q, el, save, rerender); },
         useSuggested(b) { const it = itemAt(b); it.unitPrice = suggested(it, q.pct).precioRedondeado; save(); rerender(); toast('Precio actualizado'); },
         refreshPrices() {
           let k = 0;
@@ -878,6 +879,19 @@
       </section>`;
   }
 
+  // Interruptor "Alquilado" para un insumo que sea implemento (path = ruta del insumo en la vista)
+  function rentSwitch(i, path) {
+    if (i.cat !== 'implemento' && i.cat !== 'alquilado') return '';
+    return `<label class="switch sm ins-rent" title="Alquilado a un tercero para este evento"><input type="checkbox" data-ac="insRent" data-path="${path}" ${i.cat === 'alquilado' ? 'checked' : ''}><i></i><span>Alquilado</span></label>`;
+  }
+  // Acción compartida: cambia el insumo entre propio y alquilado
+  function toggleInsRent(root, el, save, rerender) {
+    const ins = getP(root, el.dataset.path);
+    if (!ins) return;
+    ins.cat = el.checked ? 'alquilado' : 'implemento';
+    save(); rerender();
+  }
+
   /* ---------- pestaña 3: costos internos ---------- */
   function tabCostos(q) {
     const pct = q.pct;
@@ -918,7 +932,7 @@
               <div class="ins-table">
                 <div class="ins-row head"><span>Insumo (flor, follaje, oasis, vela…)</span><span>Cant. por arreglo</span><span>Unidad</span><span>Precio unit.</span><span>Costo</span><span>Total evento</span><span></span></div>
                 ${(it.cost.insumos || []).map((i, k) => `<div class="ins-row">
-                  <span>${inp(`${P}.cost.insumos.${k}.name`, i.name, { list: 'dl-cat', ph: 'Escriba para buscar…' })}</span>
+                  <span>${inp(`${P}.cost.insumos.${k}.name`, i.name, { list: 'dl-cat', ph: 'Escriba para buscar…' })}${rentSwitch(i, `${P}.cost.insumos.${k}`)}</span>
                   <span>${inp(`${P}.cost.insumos.${k}.qty`, i.qty, { t: 'num' })}</span>
                   <span>${inp(`${P}.cost.insumos.${k}.unit`, i.unit, { cls: 'unit' })}</span>
                   <span>${inp(`${P}.cost.insumos.${k}.price`, i.price, { t: 'money' })}</span>
@@ -1407,16 +1421,18 @@
   /* =====================================================================
    * 4. CATÁLOGO DE PRECIOS
    * ===================================================================== */
-  const catFilter = { cat: 'flor', q: '' };
+  const catFilter = { cat: 'flor', q: '', rent: '' };
+  const isImpl = (c) => c === 'implemento' || c === 'alquilado';
   function renderCatalog() {
     const cat = st().catalog;
     const save = () => scheduleSave(() => Store.saveCatalog());
     view = {
       root: { catalog: cat, f: catFilter },
-      onInput(path) { if (path.startsWith('f.')) { draw(); return; } save(); },
+      onInput(path) { if (path.startsWith('f.')) { draw(); return; } save(); if (/\.cat$/.test(path)) draw(); },
       actions: {
         add() {
-          const c = { id: 'c' + Store.uid(), cat: catFilter.cat || 'flor', name: 'NUEVO INSUMO', price: 0, unit: catFilter.cat === 'flor' ? 'PQ' : 'UN', perPack: catFilter.cat === 'flor' ? 10 : 1 };
+          const newCat = catFilter.cat === 'implemento' && catFilter.rent === 'alquilado' ? 'alquilado' : (catFilter.cat || 'flor');
+          const c = { id: 'c' + Store.uid(), cat: newCat, name: 'NUEVO INSUMO', price: 0, unit: catFilter.cat === 'flor' ? 'PQ' : 'UN', perPack: catFilter.cat === 'flor' ? 10 : 1 };
           cat.unshift(c); catFilter.q = ''; save(); renderCatalog();
           setTimeout(() => { const el = $('[data-b="catalog.0.name"]'); el && (el.focus(), el.select()); }, 30);
         },
@@ -1425,7 +1441,10 @@
           if (!(await confirmBox('Eliminar del catálogo', `"${cat[i].name}" se quitará del catálogo. Las cotizaciones ya hechas conservan su precio.`, 'Eliminar'))) return;
           cat.splice(i, 1); save(); draw();
         },
-        chip(b) { catFilter.cat = b.dataset.k; renderCatalog(); },
+        chip(b) { catFilter.cat = b.dataset.k; catFilter.rent = ''; renderCatalog(); },
+        rentFilter(b) { catFilter.rent = b.dataset.k; renderCatalog(); },
+        // Interruptor "Alquilado": pasa el implemento entre propio y alquilado
+        rent(el) { const c = cat[+el.dataset.i]; c.cat = el.checked ? 'alquilado' : 'implemento'; save(); draw(); toast(el.checked ? `"${c.name}" marcado como alquilado` : `"${c.name}" marcado como propio`); },
         exportCsv() { download('Catalogo de precios Alheli.csv', csv([['Categoría', 'Nombre', 'Unidad', 'Unidades por paquete', 'Precio'], ...cat.map((c) => [c.cat, c.name, c.unit, c.perPack, c.price])]), 'text/csv;charset=utf-8'); },
         importCsv() { $('#csvFile').click(); },
         async updateRecipes() {
@@ -1442,9 +1461,16 @@
         <input type="file" id="csvFile" accept=".csv,text/csv" hidden></div></div>
       <div class="toolbar card">
         <div class="search">${icon('search', 16)}${inp('f.q', catFilter.q, { ph: 'Buscar insumo…', cls: 'grow' })}</div>
-        <div class="chips">${[['', 'Todo', cat.length], ...Object.entries(CAT_LABELS).map(([k, l]) => [k, l, counts[k]])].map(([k, l, c]) => `<button class="chip ${catFilter.cat === k ? 'on' : ''}" data-a="chip" data-k="${k}">${l} <i>${c}</i></button>`).join('')}</div>
+        <div class="chips">${[['', 'Todo', cat.length], ['flor', CAT_LABELS.flor, counts.flor], ['oasis', CAT_LABELS.oasis, counts.oasis],
+          ['implemento', 'Implementos', counts.implemento + counts.alquilado], ['manoobra', CAT_LABELS.manoobra, counts.manoobra], ['otro', CAT_LABELS.otro, counts.otro]]
+          .map(([k, l, c]) => `<button class="chip ${catFilter.cat === k ? 'on' : ''}" data-a="chip" data-k="${k}">${l} <i>${c}</i></button>`).join('')}</div>
       </div>
-      <div class="card table-wrap"><table class="tbl compact"><thead><tr><th>Nombre</th><th>Categoría</th><th>Unidad</th><th class="r">Und. por paquete</th><th class="r">Precio de costo</th><th></th></tr></thead><tbody id="catRows"></tbody></table></div>`;
+      ${catFilter.cat === 'implemento' ? `<div class="card rent-help">
+        <div class="seg">${[['', 'Todos', counts.implemento + counts.alquilado], ['implemento', 'Propios', counts.implemento], ['alquilado', 'Alquilados', counts.alquilado]]
+          .map(([k, l, n]) => `<button class="${catFilter.rent === k ? 'on' : ''}" data-a="rentFilter" data-k="${k}">${l} <small>${n}</small></button>`).join('')}</div>
+        <p class="sm muted"><b>Alquilado</b>: se le renta a un tercero para el evento y se devuelve (copas, candelabros, bases…). <b>Propio</b>: se compra o ya es de Alhelí (velas, cristalería). Active el interruptor en cada fila. Los alquilados se muestran aparte en el costo de cada arreglo y en el pedido a proveedores, y el simulador de precio los trata distinto.</p>
+      </div>` : ''}
+      <div class="card table-wrap"><table class="tbl compact"><thead><tr><th>Nombre</th><th>Categoría</th><th>¿Alquilado?</th><th>Unidad</th><th class="r">Und. por paquete</th><th class="r">Precio de costo</th><th></th></tr></thead><tbody id="catRows"></tbody></table></div>`;
     $('#csvFile').addEventListener('change', async (e) => {
       const f = e.target.files[0]; if (!f) return;
       const text = await f.text();
@@ -1464,14 +1490,20 @@
     function draw() {
       const term = catFilter.q.trim().toLowerCase();
       const catOpts = Object.entries(CAT_LABELS);
-      $('#catRows').innerHTML = cat.map((c, i) => ({ c, i })).filter(({ c }) => (!catFilter.cat || c.cat === catFilter.cat) && (!term || c.name.toLowerCase().includes(term)))
+      const inFilter = (c) => {
+        if (!catFilter.cat) return true;
+        if (catFilter.cat === 'implemento') return isImpl(c.cat) && (!catFilter.rent || c.cat === catFilter.rent);
+        return c.cat === catFilter.cat;
+      };
+      $('#catRows').innerHTML = cat.map((c, i) => ({ c, i })).filter(({ c }) => inFilter(c) && (!term || c.name.toLowerCase().includes(term)))
         .map(({ c, i }) => `<tr>
           <td>${inp(`catalog.${i}.name`, c.name)}</td>
-          <td>${inp(`catalog.${i}.cat`, c.cat, { t: 'select', options: catOpts })}</td>
+          <td>${inp(`catalog.${i}.cat`, c.cat, { t: 'select', options: catOpts, rr: 1 })}</td>
+          <td>${isImpl(c.cat) ? `<label class="switch sm" title="Alquilado a un tercero para el evento"><input type="checkbox" data-ac="rent" data-i="${i}" ${c.cat === 'alquilado' ? 'checked' : ''}><i></i><span>${c.cat === 'alquilado' ? 'Alquilado' : 'Propio'}</span></label>` : '<span class="muted">—</span>'}</td>
           <td>${inp(`catalog.${i}.unit`, c.unit, { cls: 'unit' })}</td>
           <td class="r">${inp(`catalog.${i}.perPack`, c.perPack, { t: 'num' })}</td>
           <td class="r">${inp(`catalog.${i}.price`, c.price, { t: 'money' })}</td>
-          <td><button class="ib danger" data-a="del" data-i="${i}" title="Eliminar">${icon('trash', 15)}</button></td></tr>`).join('') || '<tr><td colspan="6" class="muted center">Sin resultados</td></tr>';
+          <td><button class="ib danger" data-a="del" data-i="${i}" title="Eliminar">${icon('trash', 15)}</button></td></tr>`).join('') || '<tr><td colspan="7" class="muted center">Sin resultados</td></tr>';
     }
     draw();
   }
@@ -1525,6 +1557,7 @@
       actions: {
         addIns() { r.insumos.push({ catId: '', name: '', cat: 'otro', unit: 'UN', perPack: 1, price: 0, qty: 1 }); save(); rerender(); setTimeout(() => { const l = $$('.ins-row input[list]'); l.length && l[l.length - 1].focus(); }, 30); },
         delIns(b) { r.insumos.splice(+b.dataset.k, 1); save(); rerender(); },
+        insRent(el) { toggleInsRent(view.root, el, save, rerender); },
         setLabor(el) { const c = st().catalog.find((x) => x.id === el.value); if (c) { r.labor = c.price; r.laborName = c.name; save(); rerender(); } },
         async addPhoto() { const ph = await pickImages(false); if (ph.length) { r.photo = ph[0]; save(); rerender(); } },
         delPhoto() { r.photo = ''; save(); rerender(); },
@@ -1557,7 +1590,7 @@
             <div class="ins-table">
               <div class="ins-row head r5"><span>Insumo</span><span>Cantidad</span><span>Unidad</span><span>Precio unit.</span><span>Costo</span><span></span></div>
               ${(r.insumos || []).map((i, k) => `<div class="ins-row r5">
-                <span>${inp(`r.insumos.${k}.name`, i.name, { list: 'dl-cat', ph: 'Escriba para buscar…' })}</span>
+                <span>${inp(`r.insumos.${k}.name`, i.name, { list: 'dl-cat', ph: 'Escriba para buscar…' })}${rentSwitch(i, `r.insumos.${k}`)}</span>
                 <span>${inp(`r.insumos.${k}.qty`, i.qty, { t: 'num' })}</span>
                 <span>${inp(`r.insumos.${k}.unit`, i.unit, { cls: 'unit' })}</span>
                 <span>${inp(`r.insumos.${k}.price`, i.price, { t: 'money' })}</span>
