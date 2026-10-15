@@ -725,3 +725,6 @@ body.tut-video .tut-big { visibility: hidden; }
 .rent-help .seg small { color: var(--muted); margin-left: 3px; }
 #catRows td:first-child .in { min-width: 230px; }
 #catRows td:nth-child(2) select.in { min-width: 150px; }
+.tag-rent { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: #6a43a5; background: #efe8f8; border-radius: 99px; padding: 1px 7px; vertical-align: middle; margin-left: 4px; }
+.add-form { display: flex; flex-direction: column; gap: 14px; }
+.add-form .nf-rent { font-size: 13.5px; }

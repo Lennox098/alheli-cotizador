@@ -734,7 +734,7 @@
         ${wide ? '' : asideTotals(q, t)}
       </div>
       ${wide ? '' : `<div class="total-bar"><span><small>Subtotal</small><b data-o="subtotal"></b></span><span class="tb-total"><small>TOTAL</small><b data-o="total"></b></span><span><small>Utilidad (interno)</small><b data-o="gan"></b></span></div>`}
-      <datalist id="dl-cat">${st().catalog.map((c) => `<option value="${esc(c.name)}">${esc(CAT_LABELS[c.cat] || c.cat)} · ${money(c.price)}/${esc(c.unit)}</option>`).join('')}</datalist>
+      <datalist id="dl-cat">${st().catalog.map((c) => `<option value="${esc(c.name)}">${esc(catLabel(c.cat))}${c.cat === 'alquilado' ? ' (alquilado)' : ''} · ${money(c.price)}/${esc(c.unit)}</option>`).join('')}</datalist>
       <datalist id="dl-tipo">${['Boda', 'Corporativo', 'Quince años', 'Cumpleaños', 'Bautizo', 'Primera comunión', 'Grado', 'Aniversario', 'Baby shower', 'Funeral', 'Otro'].map((x) => `<option value="${x}">`).join('')}</datalist>`;
     setOutputs(quoteOutputs(q));
   }
@@ -1024,14 +1024,15 @@
         <div class="kpi"><small>Insumos distintos</small><b>${rows.length}</b></div>
         <div class="kpi"><small>Paquetes de flores a comprar</small><b>${fmtQty(rows.filter((r) => r.cat === 'flor').reduce((a, r) => a + r.compra, 0))}</b></div>
         <div class="kpi accent"><small>Costo estimado de compra</small><b>${money(tot)}</b></div>
-        <div class="kpi">${Object.entries(byCat).map(([k, v]) => `<div class="tl sm"><span>${esc(CAT_LABELS[k] || k)}</span><b>${money(v)}</b></div>`).join('')}</div>
+        <div class="kpi">${Object.entries(byCat).map(([k, v]) => `<div class="tl sm"><span>${esc(k === 'alquilado' ? 'Implementos en alquiler' : catLabel(k))}</span><b>${money(v)}</b></div>`).join('')}</div>
       </div>
       <div class="table-wrap"><table class="tbl">
         <thead><tr><th>Insumo</th><th class="r">Total</th><th>Unidad</th><th class="r">Comprar</th><th class="r">Tallos / und.</th><th class="r">Precio</th><th class="r">Costo + ajuste</th></tr></thead>
         <tbody>${rows.map((r) => {
-          const head = r.cat !== lastCat ? `<tr class="grp"><td colspan="7">${esc(CAT_LABELS[r.cat] || r.cat)}</td></tr>` : '';
-          lastCat = r.cat;
-          return head + `<tr title="${esc(r.usos.join('\n'))}"><td>${esc(r.name)}<div class="muted xs">${esc(r.usos.length)} uso(s)</div></td><td class="r">${fmtQty(r.qty)}</td><td>${esc(r.unit)}</td><td class="r"><b class="pill">${fmtQty(r.compra)}</b></td><td class="r">${r.perPack > 1 ? fmtQty(r.tallos) : '—'}</td><td class="r">${money(r.price)}</td><td class="r">${money(r.costoConAjuste)}</td></tr>`;
+          const g = groupCat(r.cat);
+          const head = g !== lastCat ? `<tr class="grp"><td colspan="7">${esc(catLabel(g))}</td></tr>` : '';
+          lastCat = g;
+          return head + `<tr title="${esc(r.usos.join('\n'))}"><td>${esc(r.name)}${r.cat === 'alquilado' ? ' <span class="tag-rent">alquiler</span>' : ''}<div class="muted xs">${esc(r.usos.length)} uso(s)</div></td><td class="r">${fmtQty(r.qty)}</td><td>${esc(r.unit)}</td><td class="r"><b class="pill">${fmtQty(r.compra)}</b></td><td class="r">${r.perPack > 1 ? fmtQty(r.tallos) : '—'}</td><td class="r">${money(r.price)}</td><td class="r">${money(r.costoConAjuste)}</td></tr>`;
         }).join('')}</tbody>
         <tfoot><tr><td colspan="6">Total estimado de compra</td><td class="r">${money(tot)}</td></tr></tfoot>
       </table></div>` : '<p class="muted">Aún no hay insumos. Agréguelos en la pestaña "Costos internos" (modo desglose de insumos).</p>'}
@@ -1039,11 +1040,11 @@
   }
 
   /* ---------- Pedidos por proveedor (una categoría o varias juntas) ---------- */
-  const ORDER_CATS = ['flor', 'oasis', 'implemento', 'alquilado', 'otro'];
-  const ORDER_TITLES = { flor: 'FLORES Y FOLLAJES', oasis: 'OASIS', implemento: 'IMPLEMENTOS', alquilado: 'IMPLEMENTOS ALQUILADOS', otro: 'OTROS INSUMOS' };
+  const ORDER_CATS = ['flor', 'oasis', 'implemento', 'otro']; // los alquilados van dentro de Implementos
+  const ORDER_TITLES = { flor: 'FLORES Y FOLLAJES', oasis: 'OASIS', implemento: 'IMPLEMENTOS', otro: 'OTROS INSUMOS' };
   function orderGroups(q) {
     const all = C.supplierOrder(q);
-    return ORDER_CATS.map((cat) => ({ cat, n: all.filter((r) => r.cat === cat).length })).filter((g) => g.n);
+    return ORDER_CATS.map((cat) => ({ cat, n: all.filter((r) => r.cat === cat).length, rent: all.filter((r) => r.cat === cat && r.rented).length })).filter((g) => g.n);
   }
   function selectedCats(q) {
     const groups = orderGroups(q).map((g) => g.cat);
@@ -1057,7 +1058,7 @@
     const names = [...new Set(cats.map((c) => (prov[c] || '').trim()).filter(Boolean))];
     const title = single ? 'PEDIDO DE ' + ORDER_TITLES[cats[0]] : cats.length === all.length ? 'PEDIDO DE FLORES E INSUMOS' : 'PEDIDO DE ' + cats.map((c) => ORDER_TITLES[c]).join(' + ');
     const proveedor = names.length === 1 && cats.every((c) => (prov[c] || '').trim() === names[0]) ? names[0] : '';
-    const SHORT = { flor: 'flores y follajes', oasis: 'oasis', implemento: 'implementos', alquilado: 'alquilados', otro: 'otros insumos' };
+    const SHORT = { flor: 'flores y follajes', oasis: 'oasis', implemento: 'implementos', otro: 'otros insumos' };
     const label = proveedor || (cats.length === all.length ? 'flores e insumos' : cats.map((c) => SHORT[c] || c).join(', '));
     return { cats, title, proveedor, file: `Pedido ${safeName(label).toLowerCase()} - cotizacion ${q.number}` };
   }
@@ -1071,7 +1072,7 @@
       <div class="sb-rows">${groups.map((g) => `
         <div class="sb-row">
           <label class="sb-check"><input type="checkbox" data-ac="pedCat" data-k="${g.cat}" ${sel.includes(g.cat) ? 'checked' : ''}>
-            <span><b>${esc(CAT_LABELS[g.cat] || g.cat)}</b><small>${g.n} insumo(s)</small></span></label>
+            <span><b>${esc(catLabel(g.cat))}</b><small>${g.n} insumo(s)${g.rent ? ` · ${g.rent} en alquiler` : ''}</small></span></label>
           <input class="in sb-prov" data-b="proveedores.${g.cat}" value="${esc(prov[g.cat] || '')}" placeholder="Proveedor (opcional), ej. Flores La Sabana">
           <div class="actions"><button class="btn sm" data-a="orderPdf" data-cats="${g.cat}">${icon('pdf', 15)} PDF</button><button class="btn sm" data-a="orderXlsx" data-cats="${g.cat}">${icon('excel', 15)} Excel</button></div>
         </div>`).join('')}
@@ -1107,9 +1108,9 @@
       <table class="d-items d-order">
         <thead><tr><th class="c">#</th><th>INSUMO</th><th class="c">CANTIDAD</th><th class="c">UNIDAD</th><th class="c">TALLOS / UNID.</th><th class="c">RECIBIDO</th></tr></thead>
         <tbody>${rows.map((x) => {
-          const head = x.cat !== lastCat ? `<tr class="d-sec"><td colspan="6">${esc(CAT_LABELS[x.cat] || x.cat)}</td></tr>` : '';
+          const head = x.cat !== lastCat ? `<tr class="d-sec"><td colspan="6">${esc(catLabel(x.cat))}</td></tr>` : '';
           lastCat = x.cat; k++;
-          return head + `<tr><td class="c">${k}</td><td><b>${esc(x.name)}</b></td><td class="c qty">${fmtQty(x.cantidad)}</td><td class="c">${esc(x.unit)}</td><td class="c">${x.unidades == null ? '—' : fmtQty(x.unidades)}</td><td class="c"><span class="chkbox"></span></td></tr>`;
+          return head + `<tr><td class="c">${k}</td><td><b>${esc(x.name)}</b>${x.rented ? ' <span class="tag-rent">alquiler</span>' : ''}</td><td class="c qty">${fmtQty(x.cantidad)}</td><td class="c">${esc(x.unit)}</td><td class="c">${x.unidades == null ? '—' : fmtQty(x.unidades)}</td><td class="c"><span class="chkbox"></span></td></tr>`;
         }).join('')}</tbody>
       </table>
       <p class="d-order-note">${rows.length} insumo(s). Las flores están redondeadas al paquete completo. Por favor confirmar disponibilidad, precio y fecha de entrega.</p>
@@ -1200,7 +1201,7 @@
   }
   function exportOrderCSV(q) {
     const rows = [['Insumo', 'Categoría', 'Total', 'Unidad', 'Comprar', 'Tallos/unidades', 'Precio', 'Costo', 'Ajuste flores', 'Costo con ajuste']];
-    C.flowerOrder(q, q.pct).forEach((r) => rows.push([r.name, CAT_LABELS[r.cat] || r.cat, r.qty, r.unit, r.compra, r.tallos, r.price, r.costo, r.ajuste, r.costoConAjuste]));
+    C.flowerOrder(q, q.pct).forEach((r) => rows.push([r.name + (r.cat === 'alquilado' ? ' (alquiler)' : ''), catLabel(r.cat), r.qty, r.unit, r.compra, r.tallos, r.price, r.costo, r.ajuste, r.costoConAjuste]));
     download(`Pedido flores ${q.number} - ${safeName(q.cliente.nombre)}.csv`, csv(rows), 'text/csv;charset=utf-8');
   }
 
@@ -1430,11 +1431,54 @@
       root: { catalog: cat, f: catFilter },
       onInput(path) { if (path.startsWith('f.')) { draw(); return; } save(); if (/\.cat$/.test(path)) draw(); },
       actions: {
-        add() {
-          const newCat = catFilter.cat === 'implemento' && catFilter.rent === 'alquilado' ? 'alquilado' : (catFilter.cat || 'flor');
-          const c = { id: 'c' + Store.uid(), cat: newCat, name: 'NUEVO INSUMO', price: 0, unit: catFilter.cat === 'flor' ? 'PQ' : 'UN', perPack: catFilter.cat === 'flor' ? 10 : 1 };
-          cat.unshift(c); catFilter.q = ''; save(); renderCatalog();
-          setTimeout(() => { const el = $('[data-b="catalog.0.name"]'); el && (el.focus(), el.select()); }, 30);
+        // Formulario para agregar un insumo nuevo (flor, oasis, implemento propio o alquilado, mano de obra…)
+        async add() {
+          const start = catFilter.cat || 'flor';
+          let w = null;
+          const body = `<div class="add-form">
+            <label class="field"><span>Nombre</span><input class="in" id="nf-name" placeholder="Ej. Cilindro de vidrio 10x30, Farol blanco, Rosa roja…"></label>
+            <label class="field"><span>Categoría</span><select class="in" id="nf-cat">${Object.entries(CAT_LABELS).map(([k, l]) => `<option value="${k}" ${k === start ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
+            <label class="switch nf-rent" id="nf-rent-wrap"><input type="checkbox" id="nf-rent" ${catFilter.rent === 'alquilado' ? 'checked' : ''}><i></i><span>Es <b>alquilado</b> (se le renta a un tercero y se devuelve)</span></label>
+            <div class="grid g3">
+              <label class="field"><span>Unidad</span><input class="in unit" id="nf-unit" value="${start === 'flor' ? 'PQ' : 'UN'}" placeholder="PQ, UN, DOC, TALLO…"></label>
+              <label class="field"><span>Und. por paquete</span><input class="in num" id="nf-pack" inputmode="decimal" value="${start === 'flor' ? 10 : 1}"></label>
+              <label class="field"><span>Precio de costo</span><input class="in money" id="nf-price" inputmode="numeric" placeholder="0"></label>
+            </div>
+            <p class="sm muted">Para flores, el precio es por paquete y "Und. por paquete" es cuántos tallos trae. Para implementos, normalmente la unidad es UN y el paquete es 1.</p>
+          </div>`;
+          const ok = await modal({ title: 'Agregar al catálogo', body, okText: 'Agregar', wide: true, onOpen: (wrap) => {
+            w = wrap;
+            const sync = () => { $('#nf-rent-wrap', wrap).style.display = $('#nf-cat', wrap).value === 'implemento' ? '' : 'none'; };
+            $('#nf-cat', wrap).addEventListener('change', () => {
+              const v = $('#nf-cat', wrap).value;
+              $('#nf-unit', wrap).value = v === 'flor' ? 'PQ' : 'UN'; $('#nf-pack', wrap).value = v === 'flor' ? 10 : 1; sync();
+            });
+            sync();
+            setTimeout(() => $('#nf-name', wrap).focus(), 60);
+          } });
+          if (!ok || !w) return;
+          const name = $('#nf-name', w).value.trim();
+          if (!name) { toast('Escriba el nombre del insumo', 'err'); return; }
+          if (cat.some((x) => x.name.trim().toLowerCase() === name.toLowerCase())) { toast(`"${name}" ya existe en el catálogo`, 'err'); return; }
+          const k = $('#nf-cat', w).value;
+          const c = {
+            id: 'c' + Store.uid(), name,
+            cat: k === 'implemento' && $('#nf-rent', w).checked ? 'alquilado' : k,
+            unit: ($('#nf-unit', w).value || 'UN').toUpperCase().trim(),
+            perPack: parseFloat(String($('#nf-pack', w).value).replace(',', '.')) || 1,
+            price: parseInt(String($('#nf-price', w).value).replace(/[^\d]/g, ''), 10) || 0,
+          };
+          cat.unshift(c);
+          catFilter.cat = groupCat(c.cat); catFilter.rent = ''; catFilter.q = '';
+          await Store.saveCatalog(); renderCatalog();
+          toast(`"${c.name}" agregado a ${catLabel(c.cat)}${c.cat === 'alquilado' ? ' (alquilado)' : ''}`);
+        },
+        // Cambiar categoría desde la lista: un implemento alquilado conserva su marca si sigue siendo implemento
+        setCat(el) {
+          const c = cat[+el.dataset.i];
+          const v = el.value;
+          c.cat = v === 'implemento' && c.cat === 'alquilado' ? 'alquilado' : v;
+          save(); draw();
         },
         async del(b) {
           const i = +b.dataset.i;
@@ -1445,7 +1489,7 @@
         rentFilter(b) { catFilter.rent = b.dataset.k; renderCatalog(); },
         // Interruptor "Alquilado": pasa el implemento entre propio y alquilado
         rent(el) { const c = cat[+el.dataset.i]; c.cat = el.checked ? 'alquilado' : 'implemento'; save(); draw(); toast(el.checked ? `"${c.name}" marcado como alquilado` : `"${c.name}" marcado como propio`); },
-        exportCsv() { download('Catalogo de precios Alheli.csv', csv([['Categoría', 'Nombre', 'Unidad', 'Unidades por paquete', 'Precio'], ...cat.map((c) => [c.cat, c.name, c.unit, c.perPack, c.price])]), 'text/csv;charset=utf-8'); },
+        exportCsv() { download('Catalogo de precios Alheli.csv', csv([['Categoría', 'Nombre', 'Unidad', 'Unidades por paquete', 'Precio', 'Alquilado'], ...cat.map((c) => [groupCat(c.cat), c.name, c.unit, c.perPack, c.price, c.cat === 'alquilado' ? 'SI' : ''])]), 'text/csv;charset=utf-8'); },
         importCsv() { $('#csvFile').click(); },
         async updateRecipes() {
           let k = 0;
@@ -1455,6 +1499,7 @@
       },
     };
     const counts = Object.keys(CAT_LABELS).reduce((o, k) => { o[k] = cat.filter((c) => c.cat === k).length; return o; }, {});
+    counts.alquilado = cat.filter((c) => c.cat === 'alquilado').length;
     main().innerHTML = `
       <div class="page-head"><div><p class="eyebrow">Catálogo</p><h1>Precios de costo</h1><p class="muted">Flores, oasis, implementos y mano de obra. Base: "LISTADO DE PRECIOS NUEVO". ${cat.length} insumos.</p></div>
         <div class="actions"><button class="btn primary" data-a="add">${icon('plus')} Agregar</button><button class="btn" data-a="exportCsv">Exportar CSV</button><button class="btn" data-a="importCsv">${icon('upload', 16)} Importar CSV</button><button class="btn" data-a="updateRecipes">Actualizar plantillas</button>
@@ -1468,7 +1513,7 @@
       ${catFilter.cat === 'implemento' ? `<div class="card rent-help">
         <div class="seg">${[['', 'Todos', counts.implemento + counts.alquilado], ['implemento', 'Propios', counts.implemento], ['alquilado', 'Alquilados', counts.alquilado]]
           .map(([k, l, n]) => `<button class="${catFilter.rent === k ? 'on' : ''}" data-a="rentFilter" data-k="${k}">${l} <small>${n}</small></button>`).join('')}</div>
-        <p class="sm muted"><b>Alquilado</b>: se le renta a un tercero para el evento y se devuelve (copas, candelabros, bases…). <b>Propio</b>: se compra o ya es de Alhelí (velas, cristalería). Active el interruptor en cada fila. Los alquilados se muestran aparte en el costo de cada arreglo y en el pedido a proveedores, y el simulador de precio los trata distinto.</p>
+        <p class="sm muted">Todos son <b>Implementos</b>. Active el interruptor <b>Alquilado</b> en los que se le rentan a un tercero para el evento y se devuelven (copas, candelabros, bases…); déjelo apagado en los propios o comprados (velas, cristalería). En los pedidos a proveedores los alquilados salen con la etiqueta "alquiler".</p>
       </div>` : ''}
       <div class="card table-wrap"><table class="tbl compact"><thead><tr><th>Nombre</th><th>Categoría</th><th>¿Alquilado?</th><th>Unidad</th><th class="r">Und. por paquete</th><th class="r">Precio de costo</th><th></th></tr></thead><tbody id="catRows"></tbody></table></div>`;
     $('#csvFile').addEventListener('change', async (e) => {
@@ -1478,8 +1523,10 @@
       const sep = lines[0].includes(';') ? ';' : ',';
       let added = 0, updated = 0;
       lines.slice(1).forEach((ln) => {
-        const [cg, name, unit, perPack, price] = ln.split(sep).map((x) => x.replace(/^"|"$/g, '').trim());
+        const [cg0, name, unit, perPack, price, rentCol] = ln.split(sep).map((x) => x.replace(/^"|"$/g, '').trim());
         if (!name) return;
+        // Columna "Alquilado" (SI) convierte un implemento en alquilado; también se acepta la categoría antigua "alquilado"
+        const cg = cg0 === 'implemento' && /^s[ií]/i.test(rentCol || '') ? 'alquilado' : cg0;
         const p = parseFloat(String(price).replace(/\./g, '').replace(',', '.')) || 0;
         const ex = cat.find((c) => c.name.toLowerCase() === name.toLowerCase());
         if (ex) { Object.assign(ex, { price: p, unit: unit || ex.unit, perPack: parseFloat(String(perPack).replace(',', '.')) || ex.perPack, cat: cg || ex.cat }); updated++; }
@@ -1498,7 +1545,7 @@
       $('#catRows').innerHTML = cat.map((c, i) => ({ c, i })).filter(({ c }) => inFilter(c) && (!term || c.name.toLowerCase().includes(term)))
         .map(({ c, i }) => `<tr>
           <td>${inp(`catalog.${i}.name`, c.name)}</td>
-          <td>${inp(`catalog.${i}.cat`, c.cat, { t: 'select', options: catOpts, rr: 1 })}</td>
+          <td><select class="in" data-ac="setCat" data-i="${i}">${catOpts.map(([k, l]) => `<option value="${k}" ${k === groupCat(c.cat) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></td>
           <td>${isImpl(c.cat) ? `<label class="switch sm" title="Alquilado a un tercero para el evento"><input type="checkbox" data-ac="rent" data-i="${i}" ${c.cat === 'alquilado' ? 'checked' : ''}><i></i><span>${c.cat === 'alquilado' ? 'Alquilado' : 'Propio'}</span></label>` : '<span class="muted">—</span>'}</td>
           <td>${inp(`catalog.${i}.unit`, c.unit, { cls: 'unit' })}</td>
           <td class="r">${inp(`catalog.${i}.perPack`, c.perPack, { t: 'num' })}</td>
@@ -1629,7 +1676,7 @@
           <p class="sm muted">Los % del simulador son generales (se guardan en Ajustes).</p>
         </aside>
       </div>
-      <datalist id="dl-cat">${st().catalog.map((c) => `<option value="${esc(c.name)}">${esc(CAT_LABELS[c.cat] || c.cat)} · ${money(c.price)}/${esc(c.unit)}</option>`).join('')}</datalist>`;
+      <datalist id="dl-cat">${st().catalog.map((c) => `<option value="${esc(c.name)}">${esc(catLabel(c.cat))}${c.cat === 'alquilado' ? ' (alquilado)' : ''} · ${money(c.price)}/${esc(c.unit)}</option>`).join('')}</datalist>`;
     outs();
   }
 

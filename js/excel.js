@@ -209,7 +209,7 @@
         const unitC = n(x.qty) * n(x.price) * (isF ? 1 + n(pct.ajusteFlores) : 1);
         matTotal += unitC * n(it.qty);
         wi.set('A' + ir, ref).set('B' + ir, (it.desc || '').slice(0, 90)).set('C' + ir, F(`'COSTOS INTERNOS'!D${cr}`, n(it.qty)))
-          .set('D' + ir, x.name).set('E' + ir, CAT[x.cat] || x.cat).set('F' + ir, n(x.qty)).set('G' + ir, x.unit)
+          .set('D' + ir, x.name).set('E' + ir, window.catLabel(x.cat) + (x.cat === 'alquilado' ? ' (alquiler)' : '')).set('F' + ir, n(x.qty)).set('G' + ir, x.unit)
           .set('H' + ir, F(`F${ir}*C${ir}`, n(x.qty) * n(it.qty))).set('I' + ir, n(x.price), S.money)
           .set('J' + ir, F(`F${ir}*I${ir}*(1+IF(E${ir}="${flLabel}",${AJ},0))`, unitC), S.money)
           .set('K' + ir, n(x.perPack) || 1).set('L' + ir, F(`H${ir}*K${ir}`, n(x.qty) * n(it.qty) * (n(x.perPack) || 1)));
@@ -249,7 +249,7 @@
     const order = C.flowerOrder(q, pct);
     let pr = 3;
     order.forEach((o) => {
-      wp.set('A' + pr, o.name).set('B' + pr, CAT[o.cat] || o.cat).set('C' + pr, o.unit)
+      wp.set('A' + pr, o.name).set('B' + pr, window.catLabel(o.cat) + (o.cat === 'alquilado' ? ' (alquiler)' : '')).set('C' + pr, o.unit)
         .set('D' + pr, F(`SUMIF(INSUMOS!$D:$D,A${pr},INSUMOS!$H:$H)`, o.qty))
         .set('E' + pr, F(o.cat === 'flor' || o.unit === 'PQ' ? `ROUNDUP(D${pr},0)` : `D${pr}`, o.compra), { font: font({ bold: true, color: BRAND }) })
         .set('F' + pr, o.price, S.money).set('G' + pr, F(`D${pr}*F${pr}*(1+IF(B${pr}="${flLabel}",${AJ},0))`, o.costoConAjuste), S.money)
@@ -354,12 +354,12 @@
     let lastCat = '', k = 0;
     rows.forEach((x) => {
       if (x.cat !== lastCat) {
-        ws.merge(`A${r}:G${r}`).set('A' + r, (CAT[x.cat] || x.cat).toUpperCase(), S.sec).height(r, 20);
+        ws.merge(`A${r}:G${r}`).set('A' + r, window.catLabel(x.cat).toUpperCase(), S.sec).height(r, 20);
         ['B', 'C', 'D', 'E', 'F', 'G'].forEach((c) => ws.style(c + r, S.sec));
         r++; lastCat = x.cat;
       }
       k++;
-      ws.set('A' + r, k, center).set('B' + r, x.name, Object.assign({}, cell, { font: font({ bold: true }) })).set('C' + r, CAT[x.cat] || x.cat, Object.assign({}, cell, { font: font({ color: MUTED }) }))
+      ws.set('A' + r, k, center).set('B' + r, x.name + (x.rented ? ' (alquiler)' : ''), Object.assign({}, cell, { font: font({ bold: true }) })).set('C' + r, window.catLabel(x.cat), Object.assign({}, cell, { font: font({ color: MUTED }) }))
         .set('D' + r, x.cantidad, qtyStyle).set('E' + r, x.unit, center).set('F' + r, x.unidades == null ? '—' : x.unidades, Object.assign({}, center, { numFmt: '#,##0' }))
         .style('G' + r, box);
       ws.height(r, 20); r++;

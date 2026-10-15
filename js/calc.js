@@ -201,7 +201,7 @@
         costo, ajuste, costoConAjuste: costo + ajuste,
       });
     });
-    const order = { flor: 0, oasis: 1, implemento: 2, alquilado: 3, manoobra: 4, otro: 5 };
+    const order = { flor: 0, oasis: 1, implemento: 2, alquilado: 2, manoobra: 4, otro: 5 }; // alquilados van dentro de Implementos
     rows.sort((a, b) => (order[a.cat] ?? 9) - (order[b.cat] ?? 9) || a.name.localeCompare(b.name, 'es'));
     return rows;
   }
@@ -209,11 +209,13 @@
   // Pedido para el proveedor: solo cantidades (sin precios). Las flores y lo que
   // se compra por paquete se redondea hacia arriba; "unidades" = paquetes × tallos por paquete.
   // cats (opcional): lista de categorías a incluir, ej. ['flor'] para el proveedor de flores
+  // Los implementos alquilados se agrupan con los demás implementos (rented = true los marca).
   function supplierOrder(q, pct, cats) {
+    const grp = (c) => (c === 'alquilado' ? 'implemento' : c);
     return flowerOrder(q, pct || q.pct || {})
-      .filter((r) => r.cat !== 'manoobra' && r.qty > 0 && (!cats || cats.includes(r.cat)))
+      .filter((r) => r.cat !== 'manoobra' && r.qty > 0 && (!cats || cats.includes(grp(r.cat))))
       .map((r) => ({
-        name: r.name, cat: r.cat, unit: r.unit || 'UN',
+        name: r.name, cat: grp(r.cat), rented: r.cat === 'alquilado', unit: r.unit || 'UN',
         cantidad: r.compra,
         unidades: r.perPack > 1 ? r.compra * r.perPack : null,
         exacto: r.qty,

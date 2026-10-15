@@ -78,11 +78,14 @@ window.STATUS = {
   cancelada: 'Cancelada',
 };
 
+// Categorías que ve el usuario. Un implemento alquilado NO es otra categoría:
+// es un implemento con el interruptor "Alquilado" activado (internamente cat = 'alquilado').
 window.CAT_LABELS = {
   flor: 'Flores y follajes',
   oasis: 'Oasis',
-  implemento: 'Implementos (velas, cristalería)',
-  alquilado: 'Implementos alquilados',
+  implemento: 'Implementos',
   manoobra: 'Mano de obra (decorador)',
   otro: 'Otros',
 };
+window.groupCat = (c) => (c === 'alquilado' ? 'implemento' : c);
+window.catLabel = (c) => window.CAT_LABELS[window.groupCat(c)] || c;
