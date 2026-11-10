@@ -313,7 +313,7 @@
   }
 
   // Pedido para el proveedor: solo cantidades, sin precios
-  // meta: { cats, title, proveedor, file } (si no viene: todo el pedido)
+  // meta: { cats, title, proveedor, file } (si no viene: el pedido completo)
   function supplierWorkbook(q, settings, meta) {
     meta = meta || { cats: null, title: 'PEDIDO DE FLORES E INSUMOS', proveedor: '', file: `Pedido proveedor - cotizacion ${q.number}` };
     const wb = new window.XW.Workbook();

@@ -1,6 +1,6 @@
 /*
  * ALMACENAMIENTO
- * - Modo local: guarda todo en este navegador (localStorage). Funciona sin internet.
+ * - Modo local: guarda la información en este navegador (localStorage). Funciona sin internet.
  * - Modo nube: si config.js tiene SUPABASE_URL y SUPABASE_ANON_KEY, guarda en
  *   Supabase (gratis) para compartir los datos con el contador.
  * Tabla en la nube: registros(id, tipo, datos, actualizado). Ver supabase.sql.

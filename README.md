@@ -146,9 +146,14 @@ aplicasion/
 ├── index.html        Página principal
 ├── tests.html        Pruebas: cálculos de la app vs. valores del Excel
 ├── supabase.sql      Script de la base de datos en la nube (opcional)
+├── _headers          Cabeceras de seguridad (Cloudflare Pages / Netlify; GitHub Pages no las admite)
 ├── css/styles.css    Diseño (pantalla, celular e impresión)
+├── css/fonts.css     Tipografías alojadas en el sitio (@font-face)
 ├── assets/logo.jpg   Logo
+├── assets/fonts/     Fuentes Cormorant Garamond e Inter (WOFF2, licencia OFL)
 └── js/
+    ├── vendor/       Librerías de terceros alojadas aquí: html2pdf y supabase-js (ver LEEME.txt)
+    ├── theme-init.js Tema claro/oscuro y protección contra clickjacking (corre antes de pintar)
     ├── config.js     Datos de empresa, cuentas, términos, % y nube  ← lo único que se edita a mano
     ├── calc.js       Motor de cálculo (todas las fórmulas)
     ├── store.js      Guardado local / Supabase, plantillas iniciales
@@ -159,8 +164,21 @@ aplicasion/
     ├── catalog.js    Catálogo inicial (221 precios del listado nuevo)
     ├── demo.js       Cotizaciones de ejemplo 2428 y 2347
     ├── demo-fotos.js Fotos del ejemplo 2347 (se cargan solo al usar ese ejemplo)
-    └── logo.js       Logo embebido para el PDF y el Excel
+    ├── logo.js       Logo embebido para el PDF y el Excel
+    └── tutorial-flag.js, tests-page.js   Scripts pequeños que antes estaban dentro del HTML
 ```
+
+## 7. Seguridad
+
+La aplicación está pensada para pasar un escaneo de seguridad (OWASP ZAP) sin hallazgos propios:
+
+- **Sin recursos de terceros.** Las librerías (`html2pdf`, `supabase-js`) y las fuentes se sirven desde el propio sitio (`js/vendor/` y `assets/fonts/`), con su origen y su hash anotados en `js/vendor/LEEME.txt`. Nada se descarga de un CDN.
+- **Política de seguridad de contenido (CSP).** Cada página declara, en un `<meta http-equiv="Content-Security-Policy">`, que solo puede cargar scripts, estilos, fuentes e imágenes de su propio origen y conectarse únicamente a Supabase. Por eso no hay `<script>` ni `<style>` incrustados, ni atributos `style=` ni `onclick=`: los valores dinámicos de los gráficos se aplican desde JavaScript. **Si cambia la URL del proyecto de Supabase, actualice `connect-src` en el `<meta>` de las cuatro páginas HTML y en `_headers`.**
+- **Anti-clickjacking.** `js/theme-init.js` oculta la página si se intenta mostrar dentro de un marco de otro sitio.
+- **Cabeceras HTTP.** GitHub Pages no permite configurarlas, así que `X-Frame-Options`, `X-Content-Type-Options` y una CSP por cabecera (con `frame-ancestors`) solo son posibles en otro alojamiento. El archivo `_headers` las trae listas: al publicar en Cloudflare Pages o Netlify (gratuitos) se aplican solas.
+- **Datos.** En modo nube solo leen o escriben los usuarios con sesión (reglas RLS de `supabase.sql`). En el panel de Supabase compruebe que **«Allow new users to sign up» esté desactivado**, use contraseñas largas y active la verificación en dos pasos.
+- **Actualizar una librería:** vea `js/vendor/LEEME.txt` (descargar, comprobar el hash y ejecutar `tests.html`).
+
 
 ## El archivo Excel que descarga la app
 | Hoja | Contenido |
@@ -175,7 +193,7 @@ Validado abriéndolo en Microsoft Excel 16: 0 errores de fórmula y valores idé
 
 ## Preguntas frecuentes
 
-- **¿El PDF no se descarga?** La librería de PDF se descarga de internet la primera vez (luego queda en caché). Sin internet use *Imprimir → Guardar como PDF*. El **Excel funciona siempre, incluso sin internet**.
+- **¿El PDF no se descarga?** La librería de PDF viene incluida en `js/vendor/` y no necesita internet. Si el navegador la bloquea, use *Imprimir → Guardar como PDF*. El **Excel funciona siempre**.
 - **WhatsApp:** en el celular comparte el PDF directo al chat. En computador descarga el PDF y abre WhatsApp Web con el mensaje listo; arrastre el PDF al chat.
 - **Correo:** descarga el PDF y abre su programa de correo con asunto y mensaje; adjunte el PDF.
 - **Cambiar logo:** reemplace `assets/logo.jpg` y en `js/logo.js` pegue la imagen en base64 (o pídale a su desarrollador que lo regenere).

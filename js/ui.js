@@ -157,16 +157,16 @@
     return `<div class="donut-wrap"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="donut">
       <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--line)" stroke-width="${thick}"/>${segs}
       <text x="${c}" y="${c - 2}" text-anchor="middle" class="d-c1">${esc(center)}</text><text x="${c}" y="${c + 16}" text-anchor="middle" class="d-c2">${esc(sub)}</text></svg>
-      <ul class="legend">${parts.map((p, i) => `<li><i style="background:${p.color || PALETTE[i % PALETTE.length]}"></i><span>${esc(p.label)}</span><b>${esc(p.text || '')}</b></li>`).join('')}</ul></div>`;
+      <ul class="legend">${parts.map((p, i) => `<li><i data-bg="${p.color || PALETTE[i % PALETTE.length]}"></i><span>${esc(p.label)}</span><b>${esc(p.text || '')}</b></li>`).join('')}</ul></div>`;
   }
   function bars(items, { height = 170, fmt = (v) => v } = {}) {
     const max = Math.max(1, ...items.map((i) => Math.max(i.value, i.value2 || 0)));
-    return `<div class="bars" style="height:${height}px">${items.map((i) => `<div class="bar-col" title="${esc(i.label)}: ${esc(fmt(i.value))}">
-      <div class="bar-stack"><div class="bar" style="height:${(i.value / max) * 100}%"></div>${i.value2 != null ? `<div class="bar b2" style="height:${(i.value2 / max) * 100}%"></div>` : ''}</div>
+    return `<div class="bars" data-h="${height}" data-hu="px">${items.map((i) => `<div class="bar-col" title="${esc(i.label)}: ${esc(fmt(i.value))}">
+      <div class="bar-stack"><div class="bar" data-h="${(i.value / max) * 100}"></div>${i.value2 != null ? `<div class="bar b2" data-h="${(i.value2 / max) * 100}"></div>` : ''}</div>
       <small>${esc(i.label)}</small></div>`).join('')}</div>`;
   }
   // Barra horizontal de progreso/participación
-  const meter = (pct, cls = '') => `<div class="meter ${cls}"><i style="width:${Math.max(0, Math.min(100, pct * 100))}%"></i></div>`;
+  const meter = (pct, cls = '') => `<div class="meter ${cls}"><i data-w="${Math.max(0, Math.min(100, pct * 100))}"></i></div>`;
 
   /* ---------- Menú desplegable ---------- */
   document.addEventListener('click', (e) => {
@@ -174,6 +174,23 @@
     document.querySelectorAll('.menu.open').forEach((m) => { if (!t || m !== t.nextElementSibling) m.classList.remove('open'); });
     if (t) { e.preventDefault(); t.nextElementSibling.classList.toggle('open'); }
   });
+
+  /* ---------- Valores dinámicos sin atributos style (política CSP estricta) ----------
+   * Los gráficos marcan anchos, alturas y colores con data-w / data-h / data-hu / data-bg y aquí
+   * se aplican por CSSOM (element.style), que la política "style-src 'self'" sí permite. */
+  function applyDynamicStyles(root) {
+    const sel = '[data-w],[data-h],[data-bg]';
+    const nodes = Array.from(root.querySelectorAll(sel));
+    if (root.matches && root.matches(sel)) nodes.push(root);
+    nodes.forEach((el) => {
+      const d = el.dataset;
+      if (d.w !== undefined) el.style.width = d.w + '%';
+      if (d.h !== undefined) el.style.height = d.h + (d.hu || '%');
+      if (d.bg !== undefined) el.style.background = d.bg;
+    });
+  }
+  new MutationObserver((muts) => muts.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1) applyDynamicStyles(n); })))
+    .observe(document.documentElement, { childList: true, subtree: true });
 
   window.UI = { icon, modal, confirmBox, promptBox, lightbox, compressImage, pickImages, dataUrlKB, donut, bars, meter, PALETTE, esc };
 })();

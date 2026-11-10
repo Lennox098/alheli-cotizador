@@ -1,0 +1,30 @@
+LIBRERÍAS DE TERCEROS (alojadas en el propio sitio)
+====================================================
+Antes se cargaban desde internet (cdnjs y jsDelivr). Ahora se sirven desde aquí para que la
+aplicación no dependa de servidores ajenos: si un CDN fuera comprometido, la aplicación no se vería
+afectada, y la política de seguridad (CSP) puede ser estricta ("script-src 'self'").
+
+html2pdf.bundle.min.js
+  Versión : 0.14.0  (incluye html2canvas 1.4.1, jsPDF 4.0.0 y DOMPurify 3.3.1)
+  Origen  : https://cdn.jsdelivr.net/npm/html2pdf.js@0.14.0/dist/html2pdf.bundle.min.js
+  Licencia: MIT (ver LICENSE-html2pdf.txt y html2pdf.bundle.min.js.LICENSE.txt)
+  SHA-256 : lWPEXwMhecc0VCk6ZJkp5g/CTAWjJuirKBHPqPJcNgc=
+            (coincide con el hash que publica jsDelivr). La versión 0.10.1 que había antes traía
+            DOMPurify 2.3.0, con vulnerabilidades conocidas (CVE-2024-45801, CVE-2024-47875,
+            CVE-2025-26791, entre otras); por eso se actualizó.
+  Uso     : genera el PDF de las cotizaciones y de los pedidos (index.html y tutorial.html).
+
+supabase.js  (+ 591.supabase.js)
+  Versión : @supabase/supabase-js 2.45.4  (compilación UMD oficial del paquete npm)
+  Origen  : https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js
+  Licencia: MIT (ver LICENSE-supabase-js.txt)
+  SHA-256 : hZaWX+kY5lZgChtWjToWj1wNPSKmAIhrtvRKZVXbAec=   (supabase.js)
+            nDBbd9q2PdeeuW76uQaTZvsiVb2HMda4Yih1WNJWBAY=   (591.supabase.js)
+            (coinciden con los hashes que publica jsDelivr)
+  Uso     : solo en modo nube (js/app.js la carga cuando js/config.js trae los datos de Supabase).
+
+Cómo actualizar una librería
+  1. Descargue la versión nueva desde el mismo origen y cambie el número de versión aquí.
+  2. Compruebe el hash (en Git Bash):  openssl dgst -sha256 -binary archivo.js | openssl base64 -A
+     y compárelo con el que publica cdnjs o jsDelivr.
+  3. Ejecute tests.html (deben pasar las 47 pruebas) y genere un PDF de prueba.

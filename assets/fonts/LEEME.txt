@@ -1,0 +1,15 @@
+TIPOGRAFÍAS (alojadas en el propio sitio)
+=========================================
+Antes se descargaban de Google Fonts. Ahora se sirven desde aquí, en formato WOFF2 y solo con el
+subconjunto "latin" (cubre el español: tildes, ñ, ü, ¿, ¡, «», comillas y signos de puntuación).
+Ambas son fuentes variables, por eso un solo archivo cubre varios pesos.
+
+cormorant-garamond-latin.woff2   Cormorant Garamond, pesos 500 a 700 (títulos)
+  Origen  : https://fonts.gstatic.com/s/cormorantgaramond/v21/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtK.woff2
+  Licencia: SIL Open Font License 1.1 (OFL-Cormorant-Garamond.txt)
+
+inter-latin.woff2                Inter, pesos 400 a 700 (texto)
+  Origen  : https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2
+  Licencia: SIL Open Font License 1.1 (OFL-Inter.txt)
+
+Las reglas @font-face están en css/fonts.css.

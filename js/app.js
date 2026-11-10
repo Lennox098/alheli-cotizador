@@ -210,6 +210,7 @@
 
   const globalActions = {
     toggleNav() { document.body.classList.toggle('nav-open'); },
+    printPage() { window.print(); },
     logout() { Store.signOut(); },
     theme() {
       const cur = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
@@ -1138,7 +1139,7 @@
     return `<div class="card">
       <div class="card-head"><div><h3>${icon('chart')} Resumen financiero — Cotización ${esc(q.number)}</h3>
         <p class="muted sm">Equivale al encabezado de la hoja "IMPLEMENTOS DE DECORACION", con los porcentajes calculados sobre el total vendido (en el Excel daban #REF!).</p></div>
-        <div class="actions"><button class="btn" data-a="xlsx">${icon('excel')} Excel</button><button class="btn" data-a="exportFinance">CSV</button><button class="btn" onclick="window.print()">${icon('printer')}</button></div></div>
+        <div class="actions"><button class="btn" data-a="xlsx">${icon('excel')} Excel</button><button class="btn" data-a="exportFinance">CSV</button><button class="btn" data-a="printPage">${icon('printer')}</button></div></div>
       ${fs.lineasSinCosteo ? `<p class="badge warn block">${icon('alert', 14)} ${fs.lineasSinCosteo} ítem(s) con precio pero sin costo cargado: su ganancia aparece inflada.</p>` : ''}
       <div class="fin-grid">
         <div>${donut(parts, { size: 200, center: short(fs.ventas), sub: 'venta' })}</div>
@@ -1159,7 +1160,7 @@
     </div>
     <div class="card">
       <div class="card-head"><h3>${icon('star')} Arreglos que más ganancia dejan</h3></div>
-      ${top.map((l) => `<div class="hbar"><span class="hb-l">${esc((l.item.desc || '').slice(0, 60))}</span><span class="hb-t"><i class="${l.f.gananciaTotal < 0 ? 'neg' : ''}" style="width:${Math.abs(l.f.gananciaTotal) / maxG * 100}%"></i></span><b class="${l.f.gananciaTotal < 0 ? 'neg' : ''}">${money(l.f.gananciaTotal)}</b><small class="muted">${pctFmt(l.f.margen, 0)}</small></div>`).join('') || '<p class="muted sm">Sin datos.</p>'}
+      ${top.map((l) => `<div class="hbar"><span class="hb-l">${esc((l.item.desc || '').slice(0, 60))}</span><span class="hb-t"><i class="${l.f.gananciaTotal < 0 ? 'neg' : ''}" data-w="${Math.abs(l.f.gananciaTotal) / maxG * 100}"></i></span><b class="${l.f.gananciaTotal < 0 ? 'neg' : ''}">${money(l.f.gananciaTotal)}</b><small class="muted">${pctFmt(l.f.margen, 0)}</small></div>`).join('') || '<p class="muted sm">Sin datos.</p>'}
     </div>
     <div class="card">
       <div class="card-head"><h3>${icon('excel')} Detalle por arreglo</h3></div>
@@ -1302,7 +1303,7 @@
       };
     },
     ensureLib() {
-      if (!window.html2pdf) throw new Error('No se cargó la librería de PDF (revise la conexión a internet). Puede usar "Imprimir" → Guardar como PDF.');
+      if (!window.html2pdf) throw new Error('No se cargó la librería de PDF. Recargue la página (Ctrl+F5) e inténtelo de nuevo; mientras tanto puede usar "Imprimir" → Guardar como PDF.');
     },
     async blob(q, el) { this.ensureLib(); return window.html2pdf().set(this.opts(q)).from(el).outputPdf('blob'); },
     async download(q, el) {
@@ -1372,7 +1373,7 @@
     const opts = [['aprobada,realizada', 'Aprobadas y realizadas'], ['', 'Todas'], ...Object.entries(STATUS)];
     main().innerHTML = `
       <div class="page-head"><div><p class="eyebrow">Contabilidad</p><h1>Resumen financiero</h1><p class="muted">Todas las cotizaciones, sin fórmulas rotas. Exportable a Excel.</p></div>
-        <div class="actions"><button class="btn primary" data-a="xlsxSummary">${icon('excel')} Excel</button><button class="btn" data-a="csvSummary">CSV resumen</button><button class="btn" data-a="csvDetail">CSV detalle</button><button class="btn" onclick="window.print()">${icon('printer')}</button></div></div>
+        <div class="actions"><button class="btn primary" data-a="xlsxSummary">${icon('excel')} Excel</button><button class="btn" data-a="csvSummary">CSV resumen</button><button class="btn" data-a="csvDetail">CSV detalle</button><button class="btn" data-a="printPage">${icon('printer')}</button></div></div>
       <div class="toolbar card">
         ${field('Estado', inp('status', accFilter.status, { t: 'select', options: opts }))}
         ${field('Evento desde', inp('desde', accFilter.desde, { t: 'date' }))}
@@ -1742,7 +1743,7 @@
         <p>Almacenamiento: <b>${Store.mode === 'cloud' ? '☁ Nube (Supabase), compartido con el contador' : '💻 Este navegador (IndexedDB)'}</b>${Store.user ? ` · sesión: ${esc(Store.user.email)}` : ''} · tamaño de los datos: <b>${kb >= 1024 ? (kb / 1024).toFixed(1).replace('.', ',') + ' MB' : kb + ' KB'}</b></p>
         ${Store.mode === 'local' ? '<p class="sm muted">Para compartir con el contador desde otro equipo, active la nube (README, paso 3). Mientras tanto, descargue respaldos con frecuencia.</p>' : ''}
         <div class="actions"><button class="btn" data-a="backup">${icon('download', 16)} Descargar respaldo (.json)</button><button class="btn" data-a="restore">${icon('upload', 16)} Restaurar respaldo</button>${Store.mode === 'cloud' ? '<button class="btn ghost" data-a="logout">Cerrar sesión</button>' : ''}</div>
-        <p class="sm muted" style="margin-top:14px">Cotizaciones de ejemplo (basadas en sus Excel):</p>
+        <p class="sm muted mt14">Cotizaciones de ejemplo (basadas en sus Excel):</p>
         <div class="actions"><button class="btn sm" data-a="demo" data-ex="2428">Boda Hilton (2428)</button><button class="btn sm" data-a="demo" data-ex="2347">Boda Catedral con fotos (2347)</button></div>
         <input type="file" id="restoreFile" accept=".json,application/json" hidden>
       </div>`;
@@ -1786,7 +1787,7 @@
     bindGlobalEvents();
     window.addEventListener('hashchange', route);
     if (APP_CONFIG.SUPABASE_URL && APP_CONFIG.SUPABASE_ANON_KEY) {
-      await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js');
+      await loadScript('js/vendor/supabase.js');
     }
     try {
       const r = await Store.init();

@@ -1,0 +1,28 @@
+# Cabeceras de seguridad para Cloudflare Pages y Netlify (mismo formato en ambos).
+# GitHub Pages NO admite cabeceras personalizadas: allí este archivo no se usa (y GitHub lo ignora
+# porque empieza por "_"). La CSP también va en un <meta> dentro de cada página, que sí funciona en GitHub Pages.
+#
+# Si cambia la URL del proyecto de Supabase, actualice "connect-src" aquí y en el <meta> de las cuatro páginas HTML.
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://binzygcyvkqsxenmhczf.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+# Caché: el HTML y el código se revalidan siempre (así una actualización se ve al instante);
+# las fuentes y el logo pueden guardarse un día.
+/
+  Cache-Control: no-cache
+/*.html
+  Cache-Control: no-cache
+/js/*
+  Cache-Control: no-cache
+/css/*
+  Cache-Control: no-cache
+/assets/*
+  Cache-Control: public, max-age=86400
